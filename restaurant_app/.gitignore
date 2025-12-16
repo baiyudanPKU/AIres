@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+
+# Env secrets
+.env
+
+# Uploads (do not commit user uploads)
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# keep folder structure
+!app/static/uploads/.gitkeep
+
+
+
+

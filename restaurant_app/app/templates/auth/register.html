@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}注册{% endblock %}
+{% block content %}
+<div class="card p-4">
+  <h3 class="mb-3">注册</h3>
+  <form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label class="form-label">用户名</label>
+      <input class="form-control" name="username" required>
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">密码</label>
+        <input class="form-control" name="password" type="password" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">确认密码</label>
+        <input class="form-control" name="confirm" type="password" required>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">头像（会自动缩略到 100×100 内）</label>
+      <input class="form-control" name="avatar" type="file" accept="image/*" required>
+    </div>
+    <button class="btn btn-primary w-100">注册</button>
+  </form>
+  <div class="mt-3 text-muted">
+    已有账号？ <a href="{{ url_for('auth.login') }}">去登录</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card p-4">
+  <div class="d-flex align-items-center gap-3">
+    <img src="{{ url_for('static', filename=current_user.avatar_path) }}" style="width:64px;height:64px;border-radius:16px;object-fit:cover;">
+    <div>
+      <h4 class="mb-0">你好，{{ current_user.username }}</h4>
+      <div class="text-muted">请选择进入：管理餐厅 / 点餐</div>
+    </div>
+  </div>
+
+  <div class="row mt-4 g-3">
+    <div class="col-md-6">
+      <a class="btn btn-outline-primary w-100 py-3" href="#">🍳 管理餐厅（下一步做）</a>
+    </div>
+    <div class="col-md-6">
+      <a class="btn btn-outline-success w-100 py-3" href="#">🛒 点餐（下一步做）</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

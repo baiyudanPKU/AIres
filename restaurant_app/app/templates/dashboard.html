@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>选择功能</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body{
+      min-height: 100vh;
+      background: radial-gradient(1200px 600px at 20% 10%, #eef5ff 0%, transparent 60%),
+                  radial-gradient(1200px 600px at 80% 0%, #fff0f2 0%, transparent 55%),
+                  linear-gradient(180deg, #f7f9fc 0%, #ffffff 60%);
+    }
+    .brand-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:.5rem;
+      padding:.35rem .75rem;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      font-weight:600;
+    }
+    .glass-card{
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(0,0,0,.06);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.08);
+      border-radius: 18px;
+    }
+    .big-action{
+      border-radius: 14px;
+      padding: 16px 18px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      text-decoration:none;
+    }
+    .big-action small{ font-weight:500; opacity:.85; }
+    .avatar{
+      width:44px; height:44px; border-radius:50%;
+      object-fit: cover;
+      border: 2px solid rgba(0,0,0,.06);
+      background:#fff;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="container py-4 d-flex justify-content-between align-items-center">
+    <div class="brand-chip">
+      🍽️ Restaurant App
+      <span class="text-muted" style="font-weight:500;">Dashboard</span>
+    </div>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('auth.logout') }}">退出登录</a>
+  </nav>
+
+  <main class="container pb-5">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-8 col-lg-6">
+        <div class="glass-card p-4 p-md-5">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            {% if user.avatar_path %}
+              <img class="avatar" src="{{ url_for('static', filename=user.avatar_path) }}" alt="avatar">
+            {% else %}
+              <div class="avatar d-flex align-items-center justify-content-center text-muted">🙂</div>
+            {% endif %}
+            <div>
+              <div class="fs-4 fw-bold">欢迎，{{ user.username }}</div>
+              <div class="text-muted">请选择你要做什么</div>
+            </div>
+          </div>
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="mt-3">
+                {% for category, msg in messages %}
+                  <div class="alert alert-{{ 'warning' if category=='danger' else category }} py-2 mb-2" role="alert">
+                    {{ msg }}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          <div class="mt-4 d-grid gap-3">
+            <a class="big-action btn btn-primary" href="/manage">
+              <div>
+                管理餐厅
+                <div><small>创建餐厅 / 上架菜品 / 报表 / 黑名单</small></div>
+              </div>
+              <span class="fs-4">→</span>
+            </a>
+
+            <a class="big-action btn btn-success" href="/order">
+              <div>
+                点餐
+                <div><small>浏览餐厅 / 加入餐桌 / 付款下单</small></div>
+              </div>
+              <span class="fs-4">→</span>
+            </a>
+          </div>
+
+          <div class="mt-4 text-center text-muted small">
+            提示：界面美观也计分，后面我们会统一做一套漂亮的布局与组件。
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

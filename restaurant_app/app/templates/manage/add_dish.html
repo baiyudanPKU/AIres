@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>添加菜品</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h2>添加菜品 - {{ restaurant.name }} / {{ category.name }}</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+        {% for cat, msg in messages %}
+          <li><b>{{ cat }}</b>：{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" enctype="multipart/form-data">
+    <p>
+      <label>菜品名称：</label><br>
+      <input name="name" maxlength="80" required>
+    </p>
+
+    <p>
+      <label>价格（例如 12.50）：</label><br>
+      <input name="price" required>
+    </p>
+
+    <p>
+      <label>菜品介绍（≤500字）：</label><br>
+      <textarea name="description" maxlength="500" rows="6" required></textarea>
+    </p>
+
+    <p>
+      <label>菜品图片（会自动缩略到≤100×100）：</label><br>
+      <input type="file" name="image" accept="image/*" required>
+    </p>
+
+    <button type="submit">提交</button>
+    <a href="{{ url_for('manage.index') }}">返回管理首页</a>
+  </form>
+</body>
+</html>
