@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 
 from app import db
-from app.models import Restaurant, Category, Dish
+from app.models import Restaurant, Category, Dish, Order, OrderItem, User, Blacklist
 from app.utils.images import save_image
 
 bp = Blueprint("manage", __name__, url_prefix="/manage")
@@ -32,7 +32,201 @@ def index():
     for d in dishes_all:
         dishes_map.setdefault(d.category_id, []).append(d)
 
-    return render_template("manage/index.html", restaurant=r, categories=cats, dishes_map=dishes_map)
+    blacklist_rows = (
+        db.session.query(Blacklist, User)
+        .join(User, User.id == Blacklist.user_id)
+        .filter(Blacklist.restaurant_id == r.id)
+        .order_by(Blacklist.id.desc())
+        .all()
+    )
+
+    visited_users = (
+        db.session.query(
+            User,
+            db.func.max(Order.created_at).label("last_order_at"),
+        )
+        .join(Order, Order.user_id == User.id)
+        .filter(Order.restaurant_id == r.id)
+        .group_by(User.id)
+        .order_by(db.desc("last_order_at"))
+        .all()
+    )
+
+    show_blacklist = request.args.get("show_blacklist") == "1"
+
+    return render_template(
+        "manage/index.html",
+        restaurant=r,
+        categories=cats,
+        dishes_map=dishes_map,
+        blacklist_rows=blacklist_rows,
+        visited_users=visited_users,
+        show_blacklist=show_blacklist,
+    )
+
+
+@bp.get("/stats")
+@login_required
+def stats():
+    r = _get_my_restaurant()
+    if not r:
+        return redirect(url_for("manage.create_restaurant"))
+
+    # 菜品汇总：总份数与销售额
+    dish_rows = (
+        db.session.query(
+            Dish,
+            db.func.coalesce(db.func.sum(OrderItem.quantity), 0).label("qty"),
+            db.func.coalesce(db.func.sum(OrderItem.quantity * OrderItem.unit_price), 0).label("amount"),
+        )
+        .outerjoin(OrderItem, OrderItem.dish_id == Dish.id)
+        .outerjoin(Order, Order.id == OrderItem.order_id)
+        .filter(Dish.restaurant_id == r.id)
+        .group_by(Dish.id)
+        .order_by(Dish.id.asc())
+        .all()
+    )
+
+    # 每个菜品的点餐用户
+    dish_user_rows = (
+        db.session.query(
+            Dish.id.label("dish_id"),
+            User.id.label("user_id"),
+            User.username,
+            User.avatar_path,
+            db.func.coalesce(db.func.sum(OrderItem.quantity), 0).label("qty"),
+        )
+        .join(OrderItem, OrderItem.dish_id == Dish.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .join(User, User.id == Order.user_id)
+        .filter(Dish.restaurant_id == r.id)
+        .group_by(Dish.id, User.id)
+        .all()
+    )
+
+    dish_users = {}
+    for row in dish_user_rows:
+        dish_users.setdefault(row.dish_id, []).append(row)
+
+    # 消费者列表（按总消费额）
+    consumer_rows = (
+        db.session.query(
+            User,
+            db.func.coalesce(db.func.sum(Order.total_amount), 0).label("total"),
+            db.func.coalesce(db.func.sum(OrderItem.quantity), 0).label("qty"),
+        )
+        .join(Order, Order.user_id == User.id)
+        .join(OrderItem, OrderItem.order_id == Order.id)
+        .filter(Order.restaurant_id == r.id)
+        .group_by(User.id)
+        .order_by(db.desc("total"))
+        .all()
+    )
+
+    chart_labels = [d.Dish.name for d in dish_rows]
+    chart_qty = [float(d.qty or 0) for d in dish_rows]
+    chart_amount = [float(d.amount or 0) for d in dish_rows]
+
+    return render_template(
+        "manage/stats.html",
+        restaurant=r,
+        dish_rows=dish_rows,
+        dish_users=dish_users,
+        consumer_rows=consumer_rows,
+        chart_labels=chart_labels,
+        chart_qty=chart_qty,
+        chart_amount=chart_amount,
+    )
+
+
+@bp.get("/user/<int:user_id>/history")
+@login_required
+def user_history(user_id):
+    r = _get_my_restaurant()
+    if not r:
+        return redirect(url_for("manage.create_restaurant"))
+
+    user = User.query.get_or_404(user_id)
+    orders = (
+        Order.query.filter_by(restaurant_id=r.id, user_id=user.id)
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+
+    dish_summary = (
+        db.session.query(
+            Dish.name,
+            db.func.coalesce(db.func.sum(OrderItem.quantity), 0).label("qty"),
+            db.func.coalesce(db.func.sum(OrderItem.quantity * OrderItem.unit_price), 0).label("amount"),
+        )
+        .join(OrderItem, OrderItem.dish_id == Dish.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.restaurant_id == r.id, Order.user_id == user.id)
+        .group_by(Dish.id)
+        .order_by(db.desc("amount"))
+        .all()
+    )
+
+    return render_template(
+        "manage/user_history.html",
+        restaurant=r,
+        target_user=user,
+        orders=orders,
+        dish_summary=dish_summary,
+    )
+
+
+@bp.post("/blacklist/add")
+@login_required
+def add_blacklist():
+    r = _get_my_restaurant()
+    if not r:
+        return redirect(url_for("manage.create_restaurant"))
+
+    user_id_raw = request.form.get("user_id", "").strip()
+    username = request.form.get("username", "").strip()
+
+    target_user = None
+
+    if user_id_raw:
+        try:
+            target_user = User.query.get(int(user_id_raw))
+        except (TypeError, ValueError):
+            target_user = None
+
+    if not target_user and username:
+        target_user = User.query.filter_by(username=username).first()
+
+    if not target_user:
+        flash("请选择或输入要拉黑的用户", "danger")
+        return redirect(url_for("manage.index", show_blacklist=1))
+
+    exists = Blacklist.query.filter_by(restaurant_id=r.id, user_id=target_user.id).first()
+    if exists:
+        flash("该用户已在黑名单", "warning")
+        return redirect(url_for("manage.index", show_blacklist=1))
+
+    db.session.add(Blacklist(restaurant_id=r.id, user_id=target_user.id))
+    db.session.commit()
+    flash(f"已将 {target_user.username} 拉入黑名单", "success")
+    return redirect(url_for("manage.index", show_blacklist=1))
+
+
+@bp.post("/blacklist/<int:user_id>/remove")
+@login_required
+def remove_blacklist(user_id):
+    r = _get_my_restaurant()
+    if not r:
+        return redirect(url_for("manage.create_restaurant"))
+
+    entry = Blacklist.query.filter_by(restaurant_id=r.id, user_id=user_id).first()
+    if entry:
+        db.session.delete(entry)
+        db.session.commit()
+        flash("已移出黑名单", "success")
+    else:
+        flash("黑名单记录不存在", "warning")
+    return redirect(url_for("manage.index"))
 
 
 @bp.route("/create", methods=["GET", "POST"])

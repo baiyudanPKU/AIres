@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}菜品详情 - {{ dish.name }}{% endblock %}
+{% block body_class %}light-bg{% endblock %}
+{% block content %}
+<div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-3">
+            {% if dish.image_path %}
+            <img src="{{ url_for('static', filename=dish.image_path) }}"
+                style="width:96px;height:96px;border-radius:16px;object-fit:cover;">
+            {% endif %}
+            <div>
+                <h4 class="mb-1">{{ dish.name }}</h4>
+                <div class="text-success fw-bold">¥{{ '%.2f'|format(dish.price) }}</div>
+                <div class="text-muted small">所属餐厅：{{ restaurant.name }}</div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
+            <a class="btn btn-outline-secondary"
+                href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">返回菜单</a>
+            <a class="btn btn-success" href="{{ url_for('order.view_cart', restaurant_id=restaurant.id) }}">我的餐桌</a>
+        </div>
+    </div>
+
+    <div class="mb-3 text-muted" style="line-height:1.6;">{{ dish.description }}</div>
+
+    <form class="d-flex gap-2 mb-4" method="post"
+        action="{{ url_for('order.add_to_cart', restaurant_id=restaurant.id) }}">
+        <input type="hidden" name="dish_id" value="{{ dish.id }}">
+        <input class="form-control" style="max-width:120px;" name="quantity" type="number" min="1" value="1">
+        <button class="btn btn-primary">加入我的餐桌</button>
+    </form>
+
+    <hr>
+    <h5 class="mb-3">询问</h5>
+    <form method="post" action="{{ url_for('order.ask_dish', restaurant_id=restaurant.id, dish_id=dish.id) }}"
+        class="vstack gap-2 mb-3">
+        <textarea class="form-control" name="question" rows="3" placeholder="想问关于该菜品或其他菜品的问题"></textarea>
+        <button class="btn btn-outline-info">发送</button>
+    </form>
+
+    {% if chats %}
+    <div class="list-group">
+        {% for c in chats %}
+        <div class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between">
+                <div class="fw-bold">{{ '你' if c.role=='user' else '顾问' }}</div>
+                <div class="text-muted small">{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+            </div>
+            <div class="mt-1" style="white-space:pre-line;">{{ c.content }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-muted">暂无对话，快来提问吧。</div>
+    {% endif %}
+</div>
+{% endblock %}

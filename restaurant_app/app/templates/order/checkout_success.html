@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}付款成功{% endblock %}
+{% block body_class %}light-bg{% endblock %}
+{% block content %}
+<div class="card p-4 text-center">
+    <h3 class="mb-2">付款成功</h3>
+    <p class="text-success fw-bold">本次消费 ¥{{ '%.2f'|format(total) }}</p>
+    <p class="text-muted">感谢用餐，祝你用餐愉快！</p>
+    <div class="d-flex justify-content-center gap-2 mt-3">
+        <a class="btn btn-outline-secondary" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
+        <a class="btn btn-outline-secondary"
+            href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">返回菜单</a>
+        <a class="btn btn-primary" href="{{ url_for('order.list_restaurants') }}">去其他餐厅</a>
+    </div>
+</div>
+{% endblock %}

@@ -40,6 +40,9 @@ def create_app():
     from .blueprints.manage import bp as manage_bp
     app.register_blueprint(manage_bp)
 
+    from .blueprints.order import bp as order_bp
+    app.register_blueprint(order_bp)
+
 
     @app.get("/")
     def index():

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}我的餐桌 - {{ restaurant.name }}{% endblock %}
+{% block body_class %}light-bg{% endblock %}
+{% block content %}
+<div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">我的餐桌 - {{ restaurant.name }}</h4>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
+            <a class="btn btn-outline-secondary"
+                href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">继续点餐</a>
+        </div>
+    </div>
+
+    {% if items %}
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>菜品</th>
+                    <th>单价</th>
+                    <th>份数</th>
+                    <th>小计</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for it in items %}
+                <tr>
+                    <td class="d-flex align-items-center gap-2">
+                        {% if it.dish.image_path %}
+                        <img src="{{ url_for('static', filename=it.dish.image_path) }}"
+                            style="width:56px;height:56px;border-radius:10px;object-fit:cover;">
+                        {% endif %}
+                        <div>
+                            <div class="fw-bold">{{ it.dish.name }}</div>
+                            <div class="text-muted small">{{ it.dish.description[:60] }}{% if
+                                it.dish.description|length>60 %}...{% endif %}</div>
+                        </div>
+                    </td>
+                    <td>¥{{ '%.2f'|format(it.dish.price) }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <form method="post"
+                                action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}">
+                                <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
+                                <input type="hidden" name="action" value="dec">
+                                <button class="btn btn-sm btn-outline-secondary">-</button>
+                            </form>
+                            <span class="mx-2">{{ it.qty }}</span>
+                            <form method="post"
+                                action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}">
+                                <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
+                                <input type="hidden" name="action" value="inc">
+                                <button class="btn btn-sm btn-outline-secondary">+</button>
+                            </form>
+                        </div>
+                    </td>
+                    <td>¥{{ '%.2f'|format(it.line_total) }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}">
+                            <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
+                            <input type="hidden" name="action" value="remove">
+                            <button class="btn btn-sm btn-outline-danger">移除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="fs-5">总价：<span class="text-success">¥{{ '%.2f'|format(total) }}</span></div>
+        <form method="post" action="{{ url_for('order.checkout', restaurant_id=restaurant.id) }}">
+            <button class="btn btn-success btn-lg">付款</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="alert alert-light border">餐桌为空，先去点点什么吧。</div>
+    {% endif %}
+</div>
+{% endblock %}
