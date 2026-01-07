@@ -85,7 +85,6 @@ restaurant_app/
 ├── migrations/             # 数据库迁移文件
 ├── requirements.txt        # 依赖包列表
 ├── run.py                 # 应用启动文件
-└── wsgi.py                # WSGI入口文件
 ```
 
 ## API接口
