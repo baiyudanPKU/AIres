@@ -16,10 +16,9 @@
 - **后端框架**：Flask
 - **数据库**：SQLAlchemy (支持多种数据库)
 - **用户认证**：Flask-Login
-- **数据库迁移**：Flask-Migrate (基于Alembic)
+- **数据库操作**：SQLAlchemy ORM
 - **表单处理**：Flask-WTF
 - **图片处理**：Pillow
-- **数据库连接**：PyMySQL
 
 ## 数据模型
 
@@ -37,7 +36,7 @@
 ### 环境要求
 
 - Python 3.8+
-- 支持的数据库（MySQL推荐）
+- 支持的数据库（SQLite默认，也支持MySQL等）
 
 ### 安装步骤
 
@@ -57,15 +56,13 @@
 
 3. **配置环境变量**
    ```bash
-   cp .env.example .env
-   # 编辑 .env 文件，配置数据库连接等信息
+   # 完全不需要编辑 .env 文件（默认使用SQLite）
    ```
 
 4. **数据库初始化**
    ```bash
-   $env:FLASK_APP="wsgi.py"  # Windows PowerShell
-   # export FLASK_APP=wsgi.py  # Linux/Mac
-   flask db upgrade  # 执行数据库迁移
+   # 应用启动时会自动初始化数据库
+   # 数据库表会在首次运行时自动创建
    ```
 
 5. **启动应用**
@@ -98,6 +95,19 @@ restaurant_app/
 - `/auth/*` - 认证相关接口
 - `/main/*` - 主页和公共接口
 - `/manage/*` - 餐厅管理接口
+
+## 更新日志
+
+### 0106 wj:
+ - 增加了点餐端的功能逻辑；
+ - 增加了菜品报表和统计饼状图。
+ - 增加了黑名单功能。
+
+### 0107 迁移至SQLite并移除数据库迁移功能:
+ - 从MySQL迁移到SQLite数据库
+ - 移除了Flask-Migrate数据库迁移功能
+ - 修改了数据库初始化逻辑，支持自动创建数据库
+ - 更新了项目配置以适应SQLite
 - `/order/*` - 订单处理接口
 
 ## 开发与贡献
