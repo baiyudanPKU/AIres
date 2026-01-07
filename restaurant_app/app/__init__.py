@@ -17,9 +17,6 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ✅ 再兜底一层（强烈建议加）
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)

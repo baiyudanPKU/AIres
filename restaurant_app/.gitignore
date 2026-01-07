@@ -7,8 +7,9 @@ __pycache__/
 # Virtual env
 venv/
 
-# Env secrets
-.env
+# Database
+*.db
+instance/*.db
 
 # Uploads (do not commit user uploads)
 app/static/uploads/*
