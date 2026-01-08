@@ -54,20 +54,11 @@
    pip install -r requirements.txt
    ```
 
-3. **配置环境变量**
+### 部署后快速启动
+   使用便捷启动脚本：
    ```bash
-   # 完全不需要编辑 .env 文件（默认使用SQLite）
-   ```
-
-4. **数据库初始化**
-   ```bash
-   # 应用启动时会自动初始化数据库
-   # 数据库表会在首次运行时自动创建
-   ```
-
-5. **启动应用**
-   ```bash
-   python run.py
+   # 一键激活虚拟环境并运行run.py      # Windows PowerShell 脚本
+   ./start
    ```
 
 ## 项目结构
@@ -85,6 +76,9 @@ restaurant_app/
 ├── migrations/             # 数据库迁移文件
 ├── requirements.txt        # 依赖包列表
 ├── run.py                 # 应用启动文件
+├── start.ps1              # Windows PowerShell 一键启动脚本
+├── README.md              # 项目说明文档
+
 ```
 
 ## API接口
@@ -95,19 +89,10 @@ restaurant_app/
 - `/main/*` - 主页和公共接口
 - `/manage/*` - 餐厅管理接口
 
-## 更新日志
-
-### 0106 wj:
- - 增加了点餐端的功能逻辑；
- - 增加了菜品报表和统计饼状图。
- - 增加了黑名单功能。
-
-### 0107 迁移至SQLite并移除数据库迁移功能:
- - 从MySQL迁移到SQLite数据库
- - 移除了Flask-Migrate数据库迁移功能
- - 修改了数据库初始化逻辑，支持自动创建数据库
- - 更新了项目配置以适应SQLite
 - `/order/*` - 订单处理接口
+
+## 更新日志
+详细更新日志请查看 [更新日志.md](./更新日志.md)
 
 ## 开发与贡献
 
