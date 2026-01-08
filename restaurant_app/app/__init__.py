@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from .config import Config
 from dotenv import load_dotenv
 
@@ -36,6 +37,9 @@ def create_app():
 
     from .blueprints.order import bp as order_bp
     app.register_blueprint(order_bp)
+
+    from .blueprints.advisor import bp as advisor_bp
+    app.register_blueprint(advisor_bp)
 
 
     @app.get("/")
