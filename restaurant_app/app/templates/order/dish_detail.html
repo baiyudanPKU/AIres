@@ -205,51 +205,112 @@
     </div>
 
     <!-- 询问 -->
-    <div class="ask-card">
-      <div class="ask-head">
-        <p class="ask-title">询问顾问</p>
-        <p class="ask-sub">可以询问口味、搭配或其他菜品</p>
-      </div>
+<div class="ask-card">
+  <div class="ask-head">
+    <p class="ask-title">询问顾问</p>
+    <p class="ask-sub">可以询问口味、搭配或其他菜品</p>
+  </div>
 
-      <div class="ask-body">
-        <form method="post"
-              action="{{ url_for('order.ask_dish', restaurant_id=restaurant.id, dish_id=dish.id) }}"
-              class="vstack gap-2">
-          <textarea class="form-control auto-grow"
-                    name="question"
-                    rows="1"
-                    placeholder="例如：这道菜好吃吗？偏甜还是偏辣？理解一下口味～"></textarea>
-          <div class="d-flex justify-content-end">
-            <button class="btn btn-outline-light" type="submit">发送</button>
-          </div>
-        </form>
-
-        {% if chats %}
-          <div class="chat-box" id="chatBox">
-            <div class="chat-wrap">
-              {# ✅ 关键修复：按插入顺序（id）排序，保证“先问后答” #}
-              {% for c in chats|list|sort(attribute='id') %}
-                <div class="chat-row {% if c.role=='user' %}me{% else %}bot{% endif %}">
-                  <div>
-                    <div class="bubble {% if c.role=='user' %}me{% else %}bot{% endif %}">
-                      {{ c.content|replace('\r','')|trim }}
-                    </div>
-                    <div class="meta {% if c.role=='user' %}text-end{% endif %}">
-                      {{ '你' if c.role=='user' else '顾问' }} · {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}
-                    </div>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% else %}
-          <div class="alert alert-light border empty-box mt-3 mb-0">
-            <div class="fw-bold mb-1">暂无对话</div>
-            <div class="small text-muted">快来提问吧～</div>
-          </div>
-        {% endif %}
+  <div class="ask-body">
+    <!-- 输入区 -->
+    <div class="vstack gap-2">
+      <textarea
+        id="askInput"
+        class="form-control auto-grow"
+        rows="1"
+        placeholder="例如：这道菜偏辣吗？适合第一次来点吗？"></textarea>
+      <div class="d-flex justify-content-end">
+        <button id="askSendBtn" class="btn btn-outline-light">发送</button>
       </div>
     </div>
+
+    <!-- 聊天区 -->
+    <div class="chat-box mt-3" id="chatBox">
+      <div class="chat-wrap" id="chatWrap">
+        {% for c in chats %}
+          <div class="chat-row {{ 'me' if c.role=='user' else 'bot' }}">
+            <div>
+              <div class="bubble {{ 'me' if c.role=='user' else 'bot' }}">
+                {{ c.content|trim }}
+              </div>
+              <div class="meta {{ 'text-end' if c.role=='user' }}">
+                {{ '你' if c.role=='user' else '顾问' }}
+                · {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if not chats %}
+      <div class="alert alert-light border empty-box mt-3 mb-0">
+        <div class="fw-bold mb-1">暂无对话</div>
+        <div class="small text-muted">快来提问吧～</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+const input = document.getElementById('askInput');
+const btn = document.getElementById('askSendBtn');
+const chatWrap = document.getElementById('chatWrap');
+
+function appendMessage(role, content, timeText) {
+  const row = document.createElement('div');
+  row.className = 'chat-row ' + (role === 'user' ? 'me' : 'bot');
+
+  row.innerHTML = `
+    <div>
+      <div class="bubble ${role === 'user' ? 'me' : 'bot'}">${content}</div>
+      <div class="meta ${role === 'user' ? 'text-end' : ''}">
+        ${role === 'user' ? '你' : '顾问'} · ${timeText}
+      </div>
+    </div>
+  `;
+  chatWrap.appendChild(row);
+  row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+btn.addEventListener('click', () => {
+  const text = input.value.trim();
+  if (!text) return;
+
+  btn.disabled = true;
+  input.disabled = true;
+
+  const now = new Date().toLocaleString('zh-CN', { hour12: false });
+
+  // ① 立刻显示「我」
+  appendMessage('user', text, now);
+  input.value = '';
+
+  fetch("{{ url_for('order.ask_dish', restaurant_id=restaurant.id, dish_id=dish.id) }}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ question: text })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status !== 'success') {
+      alert(data.msg || '发送失败');
+      return;
+    }
+    // ② 再显示「顾问」
+    appendMessage('assistant', data.bot_msg.content, data.bot_msg.timestamp);
+  })
+  .finally(() => {
+    btn.disabled = false;
+    input.disabled = false;
+    input.focus();
+  });
+});
+</script>
+
+  
+  
+  
   </div>
 </div>
 

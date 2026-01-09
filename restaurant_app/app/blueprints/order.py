@@ -1,5 +1,7 @@
 import decimal
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort,jsonify
+
+
 from flask_login import login_required, current_user
 from sqlalchemy import func, desc
 
@@ -79,15 +81,20 @@ def dish_detail(restaurant_id, dish_id):
     if bl:
         flash("你已被该餐厅拉黑，无法查看菜品详情", "danger")
         return redirect(url_for("order.list_restaurants"))
+
     dish = Dish.query.filter_by(id=dish_id, restaurant_id=r.id).first_or_404()
 
     chats = (
-        ChatMessage.query.filter_by(restaurant_id=r.id, dish_id=dish.id)
-        .order_by(ChatMessage.created_at.desc())
-        .limit(10)
+        ChatMessage.query.filter_by(
+            restaurant_id=r.id,
+            dish_id=dish.id,
+            user_id=current_user.id,
+            scene="dish"
+        )
+        .order_by(ChatMessage.created_at.asc())
+        .limit(50)
         .all()
     )
-    chats = list(reversed(chats))
 
     return render_template(
         "order/dish_detail.html",
@@ -95,6 +102,176 @@ def dish_detail(restaurant_id, dish_id):
         dish=dish,
         chats=chats,
     )
+
+
+import requests, json
+
+def _get_dish_history(user_id, restaurant_id, dish_id, max_messages=20):
+    msgs = (
+        ChatMessage.query.filter_by(
+            user_id=user_id,
+            restaurant_id=restaurant_id,
+            dish_id=dish_id,
+            scene="dish"
+        )
+        .order_by(ChatMessage.created_at.desc())
+        .limit(max_messages)
+        .all()
+    )
+    msgs.reverse()
+    lines = []
+    for m in msgs:
+        ts = m.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        lines.append(f"[{ts}] {m.role}: {m.content}")
+    return "\n".join(lines)
+
+
+def _call_ai_for_dish(user_id, restaurant, dish, question):
+    # ✅ 这里复用你商家端同一套网关
+    GATEWAY_BASE_URL = "https://chat.noc.pku.edu.cn"
+    GATEWAY_API_KEY = "GuoWeiCourse_tGv4UT02q7q7"
+    MODEL_NAME = "deepseek-v3-250324"
+    API_ENDPOINT = f"{GATEWAY_BASE_URL}/v1/chat/completions"
+
+    history = _get_dish_history(user_id, restaurant.id, dish.id)
+    # ① 先查餐厅所有菜
+    all_dishes = Dish.query.filter_by(restaurant_id=restaurant.id).all()
+
+    # ② 生成 menu_text（给 AI 用）
+    menu_text = "\n".join([
+        f"- {d.name} ¥{float(d.price):.2f} 描述：{d.description or '（暂无）'}"
+        for d in all_dishes[:30]   # 最多给 30 个，够用了
+    ])
+
+    system_content = f"""
+你是一个“点餐助手”，面向普通顾客，目标是帮助顾客更快决定吃什么、怎么搭配、是否符合口味。
+
+你已知信息（来自数据库，可能不完整）：
+- 餐厅：{restaurant.name}
+- 当前菜品：{dish.name}
+- 价格：¥{float(dish.price):.2f}
+- 菜品描述：{dish.description or "（暂无）"}
+
+可选：餐厅菜单（用于推荐/对比）：
+{menu_text}
+
+对话历史（用于保持上下文）：
+{history}
+
+回答规则（非常重要）：
+1) 允许给“通用建议”和“口味偏好引导”，但必须明确哪些是通用建议、哪些是基于已知数据。
+2) 如果缺少关键事实（如辣度、甜度、食材、分量），不要直接说“无法判断”就结束；要先给一个合理的选择建议，并提出 1-2 个澄清问题让顾客补充信息。
+3) 不要编造具体事实（例如“这道菜一定很辣/用了牛肉”），除非描述里明确写了。
+4) 输出尽量简洁：优先 3-6 句话；必要时用小标题或短列表。
+5) 语气友好自然，像真实点餐助手。
+"""
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {GATEWAY_API_KEY}"
+    }
+
+    data = {
+        "model": MODEL_NAME,
+        "messages": [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": question}
+        ],
+        "stream": True,
+        "temperature": 0.6,
+        "max_tokens": 600
+    }
+
+    try:
+        resp = requests.post(API_ENDPOINT, headers=headers, json=data, stream=True, timeout=300)
+        resp.raise_for_status()
+
+        ai_reply = ""
+        for line in resp.iter_lines():
+            if not line:
+                continue
+            s = line.decode("utf-8")
+            if not s.startswith("data: "):
+                continue
+            payload = s[len("data: "):].strip()
+            if payload == "[DONE]":
+                break
+            try:
+                chunk = json.loads(payload)
+                delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
+                if delta:
+                    ai_reply += delta
+            except json.JSONDecodeError:
+                pass
+
+        ai_reply = ai_reply.strip()
+        return ai_reply if ai_reply else "我暂时没有生成到有效回答，可以换个问法试试。"
+
+    except Exception:
+        return "AI 暂时不可用，请稍后再试。"
+
+
+@bp.post("/ask_dish/<int:restaurant_id>/<int:dish_id>")
+@login_required
+def ask_dish(restaurant_id, dish_id):
+    r = Restaurant.query.get_or_404(restaurant_id)
+
+    bl = Blacklist.query.filter_by(restaurant_id=restaurant_id, user_id=current_user.id).first()
+    if bl:
+        return jsonify({"status": "error", "msg": "你已被该餐厅拉黑，无法提问"})
+
+    dish = Dish.query.filter_by(id=dish_id, restaurant_id=r.id).first_or_404()
+
+    question = (request.form.get("question") or request.form.get("content") or "").strip()
+    if not question:
+        return jsonify({"status": "error", "msg": "问题不能为空"})
+
+    # 1) 存用户消息
+    user_msg = ChatMessage(
+        restaurant_id=r.id,
+        dish_id=dish.id,
+        user_id=current_user.id,
+        role="user",
+        scene="dish",
+        content=question
+    )
+    db.session.add(user_msg)
+    db.session.commit()
+
+    # 2) 调 AI
+    ai_reply = _call_ai_for_dish(current_user.id, r, dish, question)
+
+    # 3) 存 AI 回复
+    bot_msg = ChatMessage(
+        restaurant_id=r.id,
+        dish_id=dish.id,
+        user_id=current_user.id,
+        role="assistant",
+        scene="dish",
+        content=ai_reply
+    )
+    db.session.add(bot_msg)
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "user_msg": {
+            "id": user_msg.id,
+            "role": user_msg.role,
+            "content": user_msg.content,
+            "timestamp": user_msg.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        },
+        "bot_msg": {
+            "id": bot_msg.id,
+            "role": bot_msg.role,
+            "content": bot_msg.content,
+            "timestamp": bot_msg.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }
+    })
+
+
+
+
 
 
 @bp.post("/<int:restaurant_id>/add")
@@ -250,54 +427,54 @@ def checkout(restaurant_id):
     return render_template("order/checkout_success.html", restaurant=r, total=total)
 
 
-@bp.post("/<int:restaurant_id>/dish/<int:dish_id>/ask")
-@login_required
-def ask_dish(restaurant_id, dish_id):
-    r = Restaurant.query.get_or_404(restaurant_id)
-    dish = Dish.query.filter_by(id=dish_id, restaurant_id=r.id).first_or_404()
-    question = (request.form.get("question", "") or "").strip()
-    if not question:
-        flash("请先输入想问的问题", "warning")
-        return redirect(url_for("order.dish_detail", restaurant_id=r.id, dish_id=dish.id))
+# @bp.post("/<int:restaurant_id>/dish/<int:dish_id>/ask")
+# @login_required
+# def ask_dish(restaurant_id, dish_id):
+#     r = Restaurant.query.get_or_404(restaurant_id)
+#     dish = Dish.query.filter_by(id=dish_id, restaurant_id=r.id).first_or_404()
+#     question = (request.form.get("question", "") or "").strip()
+#     if not question:
+#         flash("请先输入想问的问题", "warning")
+#         return redirect(url_for("order.dish_detail", restaurant_id=r.id, dish_id=dish.id))
 
-    related_dish = dish
-    all_dishes = Dish.query.filter_by(restaurant_id=r.id).all()
-    q_lower = question.lower()
-    for d in all_dishes:
-        if d.id == dish.id:
-            continue
-        if d.name and d.name.lower() in q_lower:
-            related_dish = d
-            break
+#     related_dish = dish
+#     all_dishes = Dish.query.filter_by(restaurant_id=r.id).all()
+#     q_lower = question.lower()
+#     for d in all_dishes:
+#         if d.id == dish.id:
+#             continue
+#         if d.name and d.name.lower() in q_lower:
+#             related_dish = d
+#             break
 
-    db.session.add(
-        ChatMessage(
-            restaurant_id=r.id,
-            user_id=current_user.id,
-            dish_id=related_dish.id,
-            role="user",
-            scene="dish",
-            content=question,
-        )
-    )
+#     db.session.add(
+#         ChatMessage(
+#             restaurant_id=r.id,
+#             user_id=current_user.id,
+#             dish_id=related_dish.id,
+#             role="user",
+#             scene="dish",
+#             content=question,
+#         )
+#     )
 
-    answer_parts = [f"关于 {related_dish.name} 的信息:"]
-    if related_dish.description:
-        answer_parts.append(related_dish.description[:160])
-    answer_parts.append(f"价格：¥{related_dish.price}")
-    answer = "\n".join(answer_parts)
+#     answer_parts = [f"关于 {related_dish.name} 的信息:"]
+#     if related_dish.description:
+#         answer_parts.append(related_dish.description[:160])
+#     answer_parts.append(f"价格：¥{related_dish.price}")
+#     answer = "\n".join(answer_parts)
 
-    db.session.add(
-        ChatMessage(
-            restaurant_id=r.id,
-            user_id=current_user.id,
-            dish_id=related_dish.id,
-            role="assistant",
-            scene="dish",
-            content=answer,
-        )
-    )
-    db.session.commit()
+#     db.session.add(
+#         ChatMessage(
+#             restaurant_id=r.id,
+#             user_id=current_user.id,
+#             dish_id=related_dish.id,
+#             role="assistant",
+#             scene="dish",
+#             content=answer,
+#         )
+#     )
+#     db.session.commit()
 
-    flash("已回答你的提问，见下方对话", "info")
-    return redirect(url_for("order.dish_detail", restaurant_id=r.id, dish_id=related_dish.id))
+#     flash("已回答你的提问，见下方对话", "info")
+#     return redirect(url_for("order.dish_detail", restaurant_id=r.id, dish_id=related_dish.id))
