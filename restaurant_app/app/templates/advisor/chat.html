@@ -1,73 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI商业顾问 - {{ restaurant.name }}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>AI商业顾问</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <style>
-    .message {
-      margin-bottom: 1.2rem;
-      padding: 0.8rem;
-      border-radius: 0.8rem;
-      position: relative;
-      max-width: 80%;
-    }
-
-    .message.user {
-      background-color: #e3f2fd;
-      margin-left: auto;
-      text-align: right;
-    }
-
-    .message.assistant {
-      background-color: #f5f5f5;
-      margin-right: auto;
-    }
-
-    .message .meta {
-      font-size: 0.75rem;
-      color: #6c757d;
-      margin-top: 0.4rem;
-    }
-
-    .message .delete-btn {
-      background: none;
-      border: none;
-      color: #dc3545;
-      cursor: pointer;
-      font-size: 0.75rem;
-      padding: 0;
-      margin-left: 0.5rem;
-    }
-
-    .chat-container {
-      height: 80vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #chat-box {
-      flex-grow: 1;
-      overflow-y: auto;
-      padding: 1rem;
-    }
-
-    .input-area {
-      padding: 1rem;
-    }
-
-    .chat-header {
-      padding: 1rem 0;
-      border-bottom: 1px solid #dee2e6;
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 </head>
-
-<body class="bg-light">
-  <div class="container py-4" style="max-width: 980px;">
+<body>
+  <div class="container py-4">
     <!-- 顶部栏 -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div class="d-flex align-items-center gap-3">
@@ -85,42 +28,56 @@
       </div>
     </div>
 
-    <div class="card shadow-sm rounded-4">
-      <div class="card-body p-0">
-        <!-- 聊天区域 -->
-        <div class="chat-container">
-          <!-- 标题栏 -->
-          <div class="chat-header text-center bg-light">
-            <h5 class="mb-0">AI商业顾问</h5>
-            <small class="text-muted">我可以分析您的餐厅数据，提供商业建议</small>
-          </div>
-
-          <!-- 加载更多 -->
-          <div class="text-center py-2">
-            <button id="load-more" class="btn btn-sm btn-outline-secondary">加载更多</button>
-          </div>
+    <div class="chat-container d-flex flex-column h-100">
+      <!-- 加载更多 -->
+      <div class="text-center py-2">
+        <button id="load-more" class="btn btn-sm btn-outline-secondary">加载更多</button>
+      </div>
 
           <!-- 消息显示区 -->
-          <div id="chat-box" class="overflow-auto">
-            {% for msg in messages %}
-            <div class="message {{ msg.role }}" data-id="{{ msg.id }}">
-              <div class="message-content">
-                <strong>{{ "您" if msg.role == 'user' else "商业顾问" }}:</strong> {{ msg.content }}
-              </div>
-              <div class="meta">
-                <span class="timestamp">[{{ msg.created_at.strftime("%Y-%m-%d %H:%M") }}]</span>
-              </div>
+      <div id="chat-box" class="flex-grow-1 overflow-auto px-3 py-2">
+        {% for msg in messages %}
+        {% if msg.role == 'user' %}
+        <div class="message-container user-message">
+          <div class="message user" data-id="{{ msg.id }}">
+            <div class="message-content">
+              {{ msg.content }}
             </div>
-            {% endfor %}
+            <div class="meta">
+              <span class="timestamp">{{ msg.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</span>
+              <button class="delete-btn">删除</button>
+            </div>
           </div>
+          <div class="message-icon">
+            <div class="role-name">您</div>
+            <div class="user-icon">👤</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="message-container bot-message">
+          <div class="message-icon">
+            <div class="role-name">商业顾问</div>
+            <div class="bot-icon">🤖</div>
+          </div>
+          <div class="message bot" data-id="{{ msg.id }}">
+            <div class="message-content">
+              {{ msg.content|safe }}
+            </div>
+            <div class="meta">
+              <span class="timestamp">{{ msg.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</span>
+              <button class="delete-btn">删除</button>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
 
           <!-- 输入区 -->
-          <div class="input-area border-top bg-white">
-            <div class="input-group">
-              <input type="text" id="msg-input" class="form-control" placeholder="向AI商业顾问提问，例如：哪个客人消费最多？..." autocomplete="off">
-              <button id="send-btn" class="btn btn-primary">发送</button>
-            </div>
-          </div>
+      <div class="input-area border-top bg-white p-3">
+        <div class="input-group">
+          <input type="text" id="msg-input" class="form-control" placeholder="向AI商业顾问提问，例如：哪个客人消费最多？..." autocomplete="off">
+          <button id="send-btn" class="btn btn-primary">发送</button>
         </div>
       </div>
     </div>
@@ -147,32 +104,94 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+    
+    function renderMarkdown(content) {
+      // 使用Marked解析Markdown，使用DOMPurify清理HTML以防止XSS
+      const markdownHtml = marked.parse(content);
+      return DOMPurify.sanitize(markdownHtml);
+    }
 
+    function formatDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const hh = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+      const ss = String(date.getSeconds()).padStart(2, '0');
+      return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+    }
+    
     function nowText() {
       const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      return `${y}-${m}-${d} ${hh}:${mm}`;
+      return formatDate(now);
     }
 
     function makeMessageHtml(msg) {
       const role = msg.role || 'user';
-      const displayName = role === 'user' ? '您' : '商业顾问';
+      const isUser = role === 'user';
       const idAttr = msg.id ? `data-id="${msg.id}"` : '';
       const tempAttr = msg._temp ? `data-temp="1"` : '';
-      return `
-        <div class="message ${escapeHtml(role)}" ${idAttr} ${tempAttr}>
-          <div class="message-content">
-            <strong>${escapeHtml(displayName)}:</strong> ${escapeHtml(msg.content)}
+      
+      // 如果时间戳是字符串格式，尝试将其转换为日期对象并格式化为本地时间
+      let displayTime = msg.timestamp || nowText();
+      if (typeof msg.timestamp === 'string' && !msg._temp) {
+          try {
+              // 尝试解析时间戳字符串为Date对象
+              const date = new Date(msg.timestamp);
+              if (!isNaN(date.getTime())) {
+                  displayTime = formatDate(date);
+              }
+          } catch (e) {
+              // 如果解析失败，使用原始时间戳
+              displayTime = msg.timestamp;
+          }
+      }
+      
+      // 渲染内容，如果是AI回复则使用Markdown渲染，否则使用纯文本转义
+      let contentHtml;
+      if (role === 'assistant' || role === 'bot') {
+        contentHtml = renderMarkdown(msg.content);
+      } else {
+        contentHtml = escapeHtml(msg.content);
+      }
+      
+      if (isUser) {
+        return `
+          <div class="message-container user-message">
+            <div class="message user" ${idAttr} ${tempAttr}>
+              <div class="message-content">
+                ${contentHtml}
+              </div>
+              <div class="meta">
+                <span class="timestamp">${escapeHtml(displayTime)}</span>
+                <button class="delete-btn">删除</button>
+              </div>
+            </div>
+            <div class="message-icon">
+              <div class="role-name">您</div>
+              <div class="user-icon">👤</div>
+            </div>
           </div>
-          <div class="meta">
-            <span class="timestamp">[${escapeHtml(msg.timestamp)}]</span>
+        `;
+      } else {
+        return `
+          <div class="message-container bot-message">
+            <div class="message-icon">
+              <div class="role-name">商业顾问</div>
+              <div class="bot-icon">🤖</div>
+            </div>
+            <div class="message bot" ${idAttr} ${tempAttr}>
+              <div class="message-content">
+                ${contentHtml}
+              </div>
+              <div class="meta">
+                <span class="timestamp">${escapeHtml(displayTime)}</span>
+                <button class="delete-btn">删除</button>
+              </div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     }
 
     function appendMessage(msg) {
@@ -244,27 +263,89 @@
 
     // 加载更多
     $('#load-more').on('click', function () {
-      $.post('{{ url_for("advisor.load_more", restaurant_id=restaurant.id) }}', {offset: offset}, function (data) {
-        if (!data || data.length === 0) {
-          $('#load-more').prop('disabled', true).text('没有更多了');
-          return;
-        }
-
-        data.reverse().forEach(msg => {
-          // 确保 role 存在
-          msg.role = msg.role || 'user';
-          $chatBox.prepend(makeMessageHtml(msg));
+      const btn = $(this);
+      btn.prop('disabled', true).text('加载中...');
+      
+      $.get('{{ url_for("advisor.load_more", restaurant_id=restaurant.id) }}?offset=' + offset)
+        .done(function(response) {
+          if (response && response.messages && response.messages.length > 0) {
+            for (const msg of response.messages) {
+              $chatBox.prepend(makeMessageHtml(msg));
+            }
+            offset += response.messages.length;
+          } else {
+            btn.prop('disabled', true).text('没有更多消息');
+            setTimeout(() => {
+              btn.text('已加载全部');
+            }, 2000);
+          }
+        })
+        .fail(function() {
+          alert('加载失败');
+        })
+        .always(function() {
+          btn.prop('disabled', false).text('加载更多');
         });
-
-        offset += data.length;
-
-        const newHeight = $chatBox[0].scrollHeight;
-        $chatBox.scrollTop(newHeight - oldHeight);
-      });
     });
 
     $(document).ready(scrollToBottom);
+    
+    // 删除消息功能
+    $(document).on('click', '.delete-btn', function() {
+      const $messageDiv = $(this).closest('.message');
+      const messageId = $messageDiv.data('id');
+      
+      if (!messageId) {
+        // 如果是临时消息，直接删除
+        $messageDiv.closest('.message-container').remove();
+        return;
+      }
+      
+      if (confirm('确定要删除这条消息吗？')) {
+        $.post('{{ url_for("advisor.delete_message") }}', {id: messageId}, function(response) {
+          if (response.status === 'success') {
+            $messageDiv.closest('.message-container').fadeOut(300, function() {
+              $(this).remove();
+            });
+          } else {
+            alert('删除失败：' + (response.error || '未知错误'));
+          }
+        }).fail(function() {
+          alert('删除失败，请检查网络连接');
+        });
+      }
+    });
+    
+    // 页面加载完成后对服务器渲染的消息应用Markdown渲染
+    $(document).ready(function() {
+      // 对所有AI助手的消息内容应用Markdown渲染
+      $('.message.bot .message-content').each(function() {
+        const content = $(this).text().trim();
+        if(content) {
+          const renderedContent = renderMarkdown(content);
+          $(this).html(renderedContent);
+        }
+      });
+      
+      // 对于服务器渲染的消息，也需要确保时间戳被正确格式化
+      $('.message .timestamp').each(function() {
+        const $this = $(this);
+        const originalTimestamp = $this.text();
+        // 验证是否是时间戳格式 (YYYY-MM-DD HH:MM:SS)
+        const timestampRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+        if (timestampRegex.test(originalTimestamp)) {
+          try {
+            const date = new Date(originalTimestamp);
+            if (!isNaN(date.getTime())) {
+              const formattedTime = formatDate(date);
+              $this.text(formattedTime);
+            }
+          } catch (e) {
+            // 如果解析失败，保持原始时间戳
+          }
+        }
+      });
+    });
   </script>
 </body>
-
 </html>

@@ -13,7 +13,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(255), nullable=False)
 
     avatar_path = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     # 关系
     restaurants = db.relationship("Restaurant", back_populates="manager", cascade="all, delete-orphan")
@@ -41,7 +41,7 @@ class Restaurant(db.Model):
 
     # 管理者（用户）
     manager_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     # 关系
     manager = db.relationship("User", back_populates="restaurants")
@@ -64,7 +64,7 @@ class Category(db.Model):
     # 固定四类：菜品 / 主食 / 甜品 / 饮品
     name = db.Column(db.String(20), nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     # 同一家餐厅内分类名不能重复
     __table_args__ = (
@@ -91,7 +91,7 @@ class Dish(db.Model):
     description = db.Column(db.String(500), nullable=False)  # <=500字
     price = db.Column(db.Numeric(10, 2), nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     __table_args__ = (
         db.UniqueConstraint("restaurant_id", "name", name="uq_dish_restaurant_name"),
@@ -123,7 +123,7 @@ class Order(db.Model):
     restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=False)
 
     total_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     user = db.relationship("User", back_populates="orders")
     restaurant = db.relationship("Restaurant", back_populates="orders")
@@ -157,7 +157,7 @@ class Blacklist(db.Model):
     restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     __table_args__ = (
         db.UniqueConstraint("restaurant_id", "user_id", name="uq_blacklist_restaurant_user"),
@@ -186,7 +186,7 @@ class ChatMessage(db.Model):
     scene = db.Column(db.String(20), nullable=False)  # dish / advisor
     content = db.Column(db.Text, nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     restaurant = db.relationship("Restaurant", back_populates="chats")
     user = db.relationship("User", back_populates="chats")

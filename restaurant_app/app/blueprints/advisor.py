@@ -9,17 +9,21 @@ import json
 
 bp = Blueprint("advisor", __name__)
 
-def get_user_history(restaurant_id, user_id, max_messages=20, scene="advisor"):
-    """获取指定餐厅、用户和场景的对话历史"""
+def get_user_history(user_id, restaurant_id, max_messages=20):
+    """获取用户的对话历史"""
+    # 按时间升序获取最近的消息，以构建对话上下文
     messages = ChatMessage.query.filter_by(
-        restaurant_id=restaurant_id, 
-        user_id=user_id, 
-        scene=scene
+        user_id=user_id,
+        restaurant_id=restaurant_id,
+        scene="advisor"
     ).order_by(ChatMessage.created_at.asc()).limit(max_messages).all()
     
     history = []
     for msg in messages:
-        history.append(f"{msg.role}: {msg.content}")
+        # 时间已存储为本地时间，直接格式化
+        timestamp_str = msg.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        history.append(f"[{timestamp_str}] {msg.role}: {msg.content}")
+    
     return "\n".join(history)
 
 
@@ -82,13 +86,16 @@ def get_restaurant_data(restaurant_id):
     }
 
 
-def call_ai_api(prompt, content, restaurant_data=None):
+def call_ai_api(prompt, content, user_id, restaurant_id, restaurant_data=None):
     """调用AI API获取商业顾问回复"""
     GATEWAY_BASE_URL = "https://chat.noc.pku.edu.cn"
     GATEWAY_API_KEY = "GuoWeiCourse_tGv4UT02q7q7"
     MODEL_NAME = "deepseek-v3-250324"
     API_ENDPOINT = f"{GATEWAY_BASE_URL}/v1/chat/completions"
 
+    # 获取历史对话上下文
+    history = get_user_history(user_id, restaurant_id)
+    
     # 构建包含真实数据的系统提示
     data_info = ""
     if restaurant_data:
@@ -109,6 +116,22 @@ def call_ai_api(prompt, content, restaurant_data=None):
         for i, dish in enumerate(restaurant_data['all_dishes'], 1):
             data_info += f"{i}. {dish['name']} (ID: {dish['id']}) - 类别: {dish['category']}, 价格: ¥{dish['price']:.2f}, 描述: {dish['description']}\n"
 
+    # 构建系统提示，包括历史对话
+    system_content = f"""你是一个专业的餐厅商业顾问。你的任务是分析餐厅的经营数据，提供商业建议和回答管理者的问题。
+
+对话历史：
+{history}
+
+以下是当前餐厅的真实数据：
+{data_info}
+
+重要规则：
+1. 只能基于提供的真实数据进行分析，不得编造任何未提供的信息
+2. 如果用户询问的数据不在提供的范围内，请明确说明无法提供相关信息
+3. 回答应简洁明了，具有实际操作性
+4. 当提及具体客户或菜品时，必须基于真实数据中的ID和名称
+5. 记住对话历史，以便能回答关于之前对话的问题"""
+    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {GATEWAY_API_KEY}"
@@ -117,8 +140,8 @@ def call_ai_api(prompt, content, restaurant_data=None):
     data = {
         "model": MODEL_NAME,
         "messages": [
-            {"role": "system", "content": f"你是一个专业的餐厅商业顾问。你的任务是分析餐厅的经营数据，提供商业建议和回答管理者的问题。以下是当前餐厅的真实数据：\n\n{data_info}\n\n重要规则：\n1. 只能基于提供的真实数据进行分析，不得编造任何未提供的信息\n2. 如果用户询问的数据不在提供的范围内，请明确说明无法提供相关信息\n3. 回答应简洁明了，具有实际操作性\n4. 当提及具体客户或菜品时，必须基于真实数据中的ID和名称"},
-            {"role": "user", "content": prompt}
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": content}  # 直接使用用户输入的内容，而不是组合后的prompt
         ],
         "stream": True,
         "temperature": 0.5,  # 降低温度以获得更准确的回答
@@ -152,7 +175,7 @@ def call_ai_api(prompt, content, restaurant_data=None):
 
     except Exception as e:
         print(f"AI API error: {e}")
-        return "商业顾问已收到您的问题: " + content
+        return "商业顾问已收到您的问题: " + user_message_content
 
 
 @bp.route("/chat/<int:restaurant_id>")
@@ -202,32 +225,11 @@ def send_message(restaurant_id):
     db.session.add(user_msg)
     db.session.commit()
 
-    # 获取历史上下文
-    history = get_user_history(restaurant_id, current_user.id)
-
-    # 构建系统 prompt
-    system_prompt = f"""
-你是一个专业的餐厅商业顾问。你的任务是分析餐厅的经营数据，提供商业建议和回答管理者的问题。
-餐厅信息：{restaurant.name}
-餐厅ID：{restaurant.id}
-
-你可以分析以下数据：
-- 用户消费情况
-- 菜品销售情况
-- 订单统计
-- 客户偏好
-
-请根据提供的数据和用户问题给出专业的商业分析和建议。回答要简洁明了，具有实际操作性。
-"""
-
-    # 完整 prompt：系统 + 历史 + 新消息
-    full_prompt = f"{system_prompt}\n\n对话历史：\n{history}\n\n用户最新消息：{content}\n你的回复："
-
     # 获取餐厅的真实数据
     restaurant_data = get_restaurant_data(restaurant_id)
 
-    # 调用 AI API
-    ai_reply = call_ai_api(full_prompt, content, restaurant_data)
+    # 调用 AI API，传递用户消息内容、用户ID、餐厅ID和餐厅数据以获取完整的对话上下文
+    ai_reply = call_ai_api(content, content, current_user.id, restaurant_id, restaurant_data)
 
     # 存储 AI 回复
     bot_reply = ChatMessage(
@@ -245,17 +247,19 @@ def send_message(restaurant_id):
         "user_msg": {
             "id": user_msg.id,
             "content": user_msg.content,
-            "timestamp": user_msg.created_at.strftime("%Y-%m-%d %H:%M")
+            "timestamp": user_msg.created_at.strftime("%Y-%m-%d %H:%M:%S"),  # 返回时间戳
+            "role": user_msg.role
         },
         "bot_msg": {
             "id": bot_reply.id,
             "content": bot_reply.content,
-            "timestamp": bot_reply.created_at.strftime("%Y-%m-%d %H:%M")
+            "timestamp": bot_reply.created_at.strftime("%Y-%m-%d %H:%M:%S"),  # 返回时间戳
+            "role": bot_reply.role
         }
     })
 
 
-@bp.route("/load_more/<int:restaurant_id>", methods=["POST"])
+@bp.route("/load_more/<int:restaurant_id>", methods=["GET"])
 @login_required
 def load_more(restaurant_id):
     """加载更多对话消息"""
@@ -265,7 +269,7 @@ def load_more(restaurant_id):
     if restaurant.manager_id != current_user.id:
         return jsonify({"status": "error", "msg": "您没有权限访问此餐厅"})
     
-    offset = int(request.form["offset"])
+    offset = int(request.args.get("offset", 0))
     limit = 10
     messages = ChatMessage.query.filter_by(
         restaurant_id=restaurant_id, 
@@ -273,8 +277,33 @@ def load_more(restaurant_id):
         scene="advisor"
     ).order_by(ChatMessage.created_at.desc()).offset(offset).limit(limit).all()
     messages.reverse()
-    data = [
-        {"id": m.id, "content": m.content, "role": m.role, "timestamp": m.created_at.strftime("%Y-%m-%d %H:%M")}
-        for m in messages
-    ]
-    return jsonify(data)
+    data = []
+    for m in messages:
+        # 时间已存储为本地时间，直接格式化
+        timestamp_str = m.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        data.append({"id": m.id, "content": m.content, "role": m.role, "timestamp": timestamp_str})
+    return jsonify({"messages": data})
+
+
+@bp.route("/delete_message", methods=["POST"])
+@login_required
+def delete_message():
+    """删除指定的消息"""
+    message_id = request.form["id"]
+    message = ChatMessage.query.get(message_id)
+    
+    if not message:
+        return jsonify({"status": "error", "error": "消息不存在"})
+    
+    # 检查用户是否有权限删除此消息（必须是消息的创建者或餐厅管理者）
+    restaurant = Restaurant.query.get_or_404(message.restaurant_id)
+    if restaurant.manager_id != current_user.id and message.user_id != current_user.id:
+        return jsonify({"status": "error", "error": "您没有权限删除此消息"})
+    
+    try:
+        db.session.delete(message)
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "error": "删除失败"})
