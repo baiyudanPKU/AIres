@@ -1,84 +1,372 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>AI商业顾问</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Bootstrap 5.3 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- 你原本就有用到 -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
+  <style>
+    :root{
+      /* 统一 A 方案：现代平台风 */
+      --p-primary:#2563EB;
+      --p-accent:#F59E0B;
+      --p-bg:#F7F8FC;
+      --p-text:#111827;
+      --p-muted:#6B7280;
+      --p-border:rgba(17,24,39,.10);
+      --p-shadow:0 14px 34px rgba(17,24,39,.08);
+      --p-radius:16px;
+    }
+
+    body{
+      background:
+        radial-gradient(1200px 650px at 12% 10%, rgba(37,99,235,.10), transparent 60%),
+        radial-gradient(900px 520px at 92% 18%, rgba(245,158,11,.08), transparent 55%),
+        linear-gradient(180deg, var(--p-bg) 0%, #FFFFFF 60%);
+      color: var(--p-text);
+    }
+
+    a{ color: var(--p-primary); text-decoration:none; }
+    a:hover{ text-decoration: underline; }
+
+    .page-wrap{ max-width: 980px; }
+
+    /* 顶部条（统一风格） */
+    .topbar{
+      border: 1px solid rgba(17,24,39,.06);
+      border-radius: 18px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 10px 22px rgba(17,24,39,.06);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width: 0;
+    }
+    .logo{
+      width:48px;height:48px;border-radius:14px;object-fit:cover;
+      border: 1px solid rgba(17,24,39,.08);
+      background: rgba(17,24,39,.04);
+      flex-shrink:0;
+    }
+    .brand-title{
+      font-weight: 900;
+      letter-spacing:.2px;
+      margin:0;
+      line-height:1.15;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-sub{
+      color: rgba(17,24,39,.62);
+      font-size: .92rem;
+      margin: 2px 0 0 0;
+    }
+    .top-actions{ display:flex; gap: 8px; flex-wrap: wrap; }
+
+    /* 卡片容器 */
+    .card{
+      border: 1px solid rgba(17,24,39,.06);
+      border-radius: var(--p-radius);
+      box-shadow: var(--p-shadow);
+      overflow: hidden;
+      background: rgba(255,255,255,.86);
+    }
+    .card-head{
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(245,158,11,.06));
+      border-bottom: 1px solid rgba(17,24,39,.06);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .head-left{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .head-title{
+      margin:0;
+      font-weight: 900;
+      color: var(--p-text);
+    }
+    .head-tip{
+      margin:0;
+      color: rgba(17,24,39,.62);
+      font-size: .92rem;
+    }
+
+    /* load more 顶部小条 */
+    .loadbar{
+      display:flex;
+      justify-content:center;
+      padding: 10px 10px 0 10px;
+    }
+    .loadbar .btn{
+      border-radius: 999px;
+      font-weight: 800;
+    }
+
+    /* 聊天区：固定高度滚动 */
+    #chat-box{
+      height: 520px;           /* 你可以按喜好改 420~640 */
+      overflow: auto;
+      padding: 14px 14px 10px 14px;
+      background: rgba(255,255,255,.60);
+    }
+
+    /* 消息布局：左 bot / 右 user */
+    .msg-row{
+      display:flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .msg-row.user{ justify-content:flex-end; }
+    .msg-row.bot{ justify-content:flex-start; }
+
+    /* 头像（更统一） */
+    .role-chip{
+      width: 42px;
+      flex-shrink:0;
+      text-align:center;
+    }
+    .role-name{
+      font-size: .75rem;
+      color: rgba(17,24,39,.60);
+      font-weight: 800;
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+    .role-icon{
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border: 1px solid rgba(17,24,39,.08);
+      background: rgba(255,255,255,.85);
+      box-shadow: 0 8px 16px rgba(17,24,39,.05);
+      font-size: 18px;
+      margin: 0 auto;
+    }
+
+    /* 气泡 */
+    .bubble{
+      max-width: min(720px, 78%);
+      border-radius: 14px;
+      border: 1px solid rgba(17,24,39,.06);
+      box-shadow: 0 8px 16px rgba(17,24,39,.05);
+      padding: 10px 12px;
+      background: rgba(255,255,255,.92);
+      word-break: break-word;
+      line-height: 1.55;
+    }
+    .bubble.user{
+      background: rgba(37,99,235,.10);
+      border-color: rgba(37,99,235,.18);
+      border-bottom-right-radius: 6px;
+    }
+    .bubble.bot{
+      background: rgba(255,255,255,.94);
+      border-bottom-left-radius: 6px;
+    }
+
+    .meta{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      margin-top: 6px;
+      font-size: .78rem;
+      color: rgba(17,24,39,.55);
+    }
+    .meta .delete-btn{
+      border: 0;
+      background: transparent;
+      color: rgba(239,68,68,.85);
+      font-weight: 800;
+      padding: 0;
+    }
+    .meta .delete-btn:hover{
+      text-decoration: underline;
+      color: rgba(239,68,68,1);
+    }
+
+    /* Markdown 内容样式（只给 bot） */
+    .bubble.bot .message-content h1,
+    .bubble.bot .message-content h2,
+    .bubble.bot .message-content h3{
+      margin: .2rem 0 .35rem 0;
+      font-weight: 900;
+    }
+    .bubble.bot .message-content p{ margin: .3rem 0; }
+    .bubble.bot .message-content ul{ margin: .3rem 0 .3rem 1.1rem; }
+    .bubble.bot .message-content code{
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(17,24,39,.06);
+    }
+    .bubble.bot .message-content pre{
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(17,24,39,.06);
+      overflow:auto;
+    }
+
+    /* 输入区 */
+    .input-area{
+      border-top: 1px solid rgba(17,24,39,.06);
+      padding: 12px 14px;
+      background: rgba(255,255,255,.86);
+    }
+    .input-wrap{
+      display:flex;
+      gap: 10px;
+      align-items:flex-end;
+    }
+    textarea#msg-input{
+      flex: 1;
+      resize: none;
+      min-height: 44px;
+      max-height: 160px;
+      overflow:hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(17,24,39,.12);
+      padding: 10px 12px;
+    }
+    textarea#msg-input:focus{
+      outline: none;
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 .25rem rgba(37,99,235,.16);
+    }
+    .btn-primary{
+      background: var(--p-primary);
+      border-color: var(--p-primary);
+      border-radius: 12px;
+      font-weight: 900;
+      padding: 10px 14px;
+      box-shadow: 0 10px 18px rgba(37,99,235,.18);
+    }
+    .btn-outline-light{
+      border-radius: 12px;
+      font-weight: 800;
+      border-color: rgba(17,24,39,.12);
+      color: var(--p-text);
+      background: rgba(255,255,255,.72);
+    }
+    .btn-outline-light:hover{
+      background: rgba(17,24,39,.04);
+      border-color: rgba(17,24,39,.18);
+      color: var(--p-text);
+    }
+
+    /* 小屏优化 */
+    @media (max-width: 576px){
+      #chat-box{ height: 520px; }
+      .bubble{ max-width: 86%; }
+      .role-chip{ display:none; } /* 手机上隐藏头像列，省空间 */
+      .msg-row{ gap: 0; }
+    }
+  </style>
 </head>
+
 <body>
-  <div class="container py-4">
+  <div class="container py-4 page-wrap">
+
     <!-- 顶部栏 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div class="d-flex align-items-center gap-3">
+    <div class="topbar">
+      <div class="brand">
         {% if restaurant.logo_path %}
-        <img src="{{ url_for('static', filename=restaurant.logo_path) }}"
-          style="width:48px;height:48px;border-radius:12px;object-fit:cover;">
+          <img class="logo" src="{{ url_for('static', filename=restaurant.logo_path) }}" alt="logo">
+        {% else %}
+          <div class="logo d-flex align-items-center justify-content-center text-muted">🍽️</div>
         {% endif %}
-        <div>
-          <div class="fs-4 fw-bold">{{ restaurant.name }}</div>
-          <div class="text-muted small">AI商业顾问</div>
+        <div class="min-w-0">
+          <div class="brand-title">{{ restaurant.name }}</div>
+          <div class="brand-sub">AI 商业顾问 · 经营建议 / 数据洞察 / 策略辅助</div>
         </div>
       </div>
-      <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" href="{{ url_for('manage.index', restaurant_id=restaurant.id) }}">返回管理</a>
+      <div class="top-actions">
+        <a class="btn btn-outline-light" href="{{ url_for('manage.index', restaurant_id=restaurant.id) }}">返回管理</a>
       </div>
     </div>
 
-    <div class="chat-container d-flex flex-column h-100">
-      <!-- 加载更多 -->
-      <div class="text-center py-2">
-        <button id="load-more" class="btn btn-sm btn-outline-secondary">加载更多</button>
+    <!-- 主聊天卡片 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="head-left">
+          <h5 class="head-title">对话</h5>
+          <p class="head-tip">你可以问：哪些菜最畅销？哪个顾客消费最高？怎样优化定价？</p>
+        </div>
       </div>
 
-          <!-- 消息显示区 -->
-      <div id="chat-box" class="flex-grow-1 overflow-auto px-3 py-2">
+      <!-- 加载更多 -->
+      <div class="loadbar">
+        <button id="load-more" class="btn btn-sm btn-outline-light">加载更多</button>
+      </div>
+
+      <!-- 消息显示区 -->
+      <div id="chat-box">
         {% for msg in messages %}
-        {% if msg.role == 'user' %}
-        <div class="message-container user-message">
-          <div class="message user" data-id="{{ msg.id }}">
-            <div class="message-content">
-              {{ msg.content }}
+          {% if msg.role == 'user' %}
+            <div class="msg-row user">
+              <div class="bubble user message" data-id="{{ msg.id }}">
+                <div class="message-content">{{ msg.content }}</div>
+                <div class="meta justify-content-end">
+                  <span class="timestamp">{{ msg.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</span>
+                  <button class="delete-btn" type="button">删除</button>
+                </div>
+              </div>
+
+              <div class="role-chip">
+                <div class="role-name">您</div>
+                <div class="role-icon">👤</div>
+              </div>
             </div>
-            <div class="meta">
-              <span class="timestamp">{{ msg.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</span>
-              <button class="delete-btn">删除</button>
+          {% else %}
+            <div class="msg-row bot">
+              <div class="role-chip">
+                <div class="role-name">顾问</div>
+                <div class="role-icon">🤖</div>
+              </div>
+
+              <div class="bubble bot message" data-id="{{ msg.id }}">
+                <!-- 注意：这里先当纯文本输出，前端统一做 markdown 渲染 -->
+                <div class="message-content">{{ msg.content }}</div>
+                <div class="meta">
+                  <span class="timestamp">{{ msg.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</span>
+                  <button class="delete-btn" type="button">删除</button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="message-icon">
-            <div class="role-name">您</div>
-            <div class="user-icon">👤</div>
-          </div>
-        </div>
-        {% else %}
-        <div class="message-container bot-message">
-          <div class="message-icon">
-            <div class="role-name">商业顾问</div>
-            <div class="bot-icon">🤖</div>
-          </div>
-          <div class="message bot" data-id="{{ msg.id }}">
-            <div class="message-content">
-              {{ msg.content|safe }}
-            </div>
-            <div class="meta">
-              <span class="timestamp">{{ msg.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</span>
-              <button class="delete-btn">删除</button>
-            </div>
-          </div>
-        </div>
-        {% endif %}
+          {% endif %}
         {% endfor %}
       </div>
 
-          <!-- 输入区 -->
-      <div class="input-area border-top bg-white p-3">
-        <div class="input-group">
-          <input type="text" id="msg-input" class="form-control" placeholder="向AI商业顾问提问，例如：哪个客人消费最多？..." autocomplete="off">
+      <!-- 输入区 -->
+      <div class="input-area">
+        <div class="input-wrap">
+          <textarea id="msg-input" placeholder="向AI商业顾问提问，例如：哪个客人消费最多？如何提升销量？…" autocomplete="off" rows="1"></textarea>
           <button id="send-btn" class="btn btn-primary">发送</button>
         </div>
+        <div class="text-muted small mt-2">回车发送 · Shift+回车换行</div>
       </div>
     </div>
   </div>
@@ -104,10 +392,9 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
-    
+
     function renderMarkdown(content) {
-      // 使用Marked解析Markdown，使用DOMPurify清理HTML以防止XSS
-      const markdownHtml = marked.parse(content);
+      const markdownHtml = marked.parse(String(content ?? ''));
       return DOMPurify.sanitize(markdownHtml);
     }
 
@@ -120,10 +407,9 @@
       const ss = String(date.getSeconds()).padStart(2, '0');
       return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
     }
-    
+
     function nowText() {
-      const now = new Date();
-      return formatDate(now);
+      return formatDate(new Date());
     }
 
     function makeMessageHtml(msg) {
@@ -131,62 +417,47 @@
       const isUser = role === 'user';
       const idAttr = msg.id ? `data-id="${msg.id}"` : '';
       const tempAttr = msg._temp ? `data-temp="1"` : '';
-      
-      // 如果时间戳是字符串格式，尝试将其转换为日期对象并格式化为本地时间
+
       let displayTime = msg.timestamp || nowText();
       if (typeof msg.timestamp === 'string' && !msg._temp) {
-          try {
-              // 尝试解析时间戳字符串为Date对象
-              const date = new Date(msg.timestamp);
-              if (!isNaN(date.getTime())) {
-                  displayTime = formatDate(date);
-              }
-          } catch (e) {
-              // 如果解析失败，使用原始时间戳
-              displayTime = msg.timestamp;
-          }
+        try {
+          const date = new Date(msg.timestamp);
+          if (!isNaN(date.getTime())) displayTime = formatDate(date);
+        } catch (e) {}
       }
-      
-      // 渲染内容，如果是AI回复则使用Markdown渲染，否则使用纯文本转义
-      let contentHtml;
-      if (role === 'assistant' || role === 'bot') {
-        contentHtml = renderMarkdown(msg.content);
-      } else {
-        contentHtml = escapeHtml(msg.content);
-      }
-      
+
+      const safeTime = escapeHtml(displayTime);
+
       if (isUser) {
+        const contentHtml = escapeHtml(msg.content);
         return `
-          <div class="message-container user-message">
-            <div class="message user" ${idAttr} ${tempAttr}>
-              <div class="message-content">
-                ${contentHtml}
-              </div>
-              <div class="meta">
-                <span class="timestamp">${escapeHtml(displayTime)}</span>
-                <button class="delete-btn">删除</button>
+          <div class="msg-row user">
+            <div class="bubble user message" ${idAttr} ${tempAttr}>
+              <div class="message-content">${contentHtml}</div>
+              <div class="meta justify-content-end">
+                <span class="timestamp">${safeTime}</span>
+                <button class="delete-btn" type="button">删除</button>
               </div>
             </div>
-            <div class="message-icon">
+            <div class="role-chip">
               <div class="role-name">您</div>
-              <div class="user-icon">👤</div>
+              <div class="role-icon">👤</div>
             </div>
           </div>
         `;
       } else {
+        const contentHtml = renderMarkdown(msg.content);
         return `
-          <div class="message-container bot-message">
-            <div class="message-icon">
-              <div class="role-name">商业顾问</div>
-              <div class="bot-icon">🤖</div>
+          <div class="msg-row bot">
+            <div class="role-chip">
+              <div class="role-name">顾问</div>
+              <div class="role-icon">🤖</div>
             </div>
-            <div class="message bot" ${idAttr} ${tempAttr}>
-              <div class="message-content">
-                ${contentHtml}
-              </div>
+            <div class="bubble bot message" ${idAttr} ${tempAttr}>
+              <div class="message-content">${contentHtml}</div>
               <div class="meta">
-                <span class="timestamp">${escapeHtml(displayTime)}</span>
-                <button class="delete-btn">删除</button>
+                <span class="timestamp">${safeTime}</span>
+                <button class="delete-btn" type="button">删除</button>
               </div>
             </div>
           </div>
@@ -197,6 +468,11 @@
     function appendMessage(msg) {
       $chatBox.append(makeMessageHtml(msg));
       scrollToBottom();
+    }
+
+    function autoGrowTextarea(el){
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 160) + 'px';
     }
 
     function sendMessage() {
@@ -215,8 +491,8 @@
       $chatBox.append($tempEl);
       scrollToBottom();
       $input.val('');
+      autoGrowTextarea($input[0]);
 
-      // 发送消息到服务器
       $.post('{{ url_for("advisor.send_message", restaurant_id=restaurant.id) }}', {content})
         .done(function (data) {
           if (!data || data.status !== 'success') {
@@ -225,17 +501,14 @@
             return;
           }
 
-          // 删除临时消息
           $tempEl.remove();
 
-          // 确保角色存在
           data.user_msg.role = data.user_msg.role || 'user';
           data.bot_msg.role = data.bot_msg.role || 'assistant';
 
           appendMessage(data.user_msg);
           appendMessage(data.bot_msg);
 
-          // 已显示消息数 +2（用户+bot）
           offset += 2;
         })
         .fail(function () {
@@ -253,7 +526,7 @@
     // 点击发送
     $sendBtn.on('click', sendMessage);
 
-    // 回车发送
+    // 回车发送（Shift+Enter换行）
     $input.on('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -261,11 +534,20 @@
       }
     });
 
-    // 加载更多
+    // 输入框自动伸缩
+    $input.on('input', function(){
+      autoGrowTextarea(this);
+    });
+
+    // 加载更多（prepend，不破坏滚动体验：保持当前位置）
     $('#load-more').on('click', function () {
       const btn = $(this);
       btn.prop('disabled', true).text('加载中...');
-      
+
+      const box = document.getElementById('chat-box');
+      const oldHeight = box.scrollHeight;
+      const oldTop = box.scrollTop;
+
       $.get('{{ url_for("advisor.load_more", restaurant_id=restaurant.id) }}?offset=' + offset)
         .done(function(response) {
           if (response && response.messages && response.messages.length > 0) {
@@ -273,40 +555,37 @@
               $chatBox.prepend(makeMessageHtml(msg));
             }
             offset += response.messages.length;
+
+            // 关键：保持用户视野不跳动
+            const newHeight = box.scrollHeight;
+            box.scrollTop = oldTop + (newHeight - oldHeight);
           } else {
-            btn.prop('disabled', true).text('没有更多消息');
-            setTimeout(() => {
-              btn.text('已加载全部');
-            }, 2000);
+            btn.text('没有更多消息').prop('disabled', true);
           }
         })
         .fail(function() {
           alert('加载失败');
+          btn.prop('disabled', false).text('加载更多');
         })
         .always(function() {
-          btn.prop('disabled', false).text('加载更多');
+          if (!btn.prop('disabled')) btn.text('加载更多');
         });
     });
 
-    $(document).ready(scrollToBottom);
-    
-    // 删除消息功能
+    // 删除消息（同时删整条 row）
     $(document).on('click', '.delete-btn', function() {
       const $messageDiv = $(this).closest('.message');
       const messageId = $messageDiv.data('id');
-      
+
       if (!messageId) {
-        // 如果是临时消息，直接删除
-        $messageDiv.closest('.message-container').remove();
+        $(this).closest('.msg-row').remove();
         return;
       }
-      
+
       if (confirm('确定要删除这条消息吗？')) {
         $.post('{{ url_for("advisor.delete_message") }}', {id: messageId}, function(response) {
           if (response.status === 'success') {
-            $messageDiv.closest('.message-container').fadeOut(300, function() {
-              $(this).remove();
-            });
+            $messageDiv.closest('.msg-row').fadeOut(200, function() { $(this).remove(); });
           } else {
             alert('删除失败：' + (response.error || '未知错误'));
           }
@@ -315,36 +594,21 @@
         });
       }
     });
-    
-    // 页面加载完成后对服务器渲染的消息应用Markdown渲染
+
+    // 初次加载：把服务器渲染的 bot 消息统一做 markdown 渲染
     $(document).ready(function() {
-      // 对所有AI助手的消息内容应用Markdown渲染
-      $('.message.bot .message-content').each(function() {
-        const content = $(this).text().trim();
-        if(content) {
-          const renderedContent = renderMarkdown(content);
-          $(this).html(renderedContent);
-        }
+      // bot 消息 markdown
+      $('.bubble.bot .message-content').each(function() {
+        const raw = $(this).text();      // 读纯文本
+        const rendered = renderMarkdown(raw);
+        $(this).html(rendered);
       });
-      
-      // 对于服务器渲染的消息，也需要确保时间戳被正确格式化
-      $('.message .timestamp').each(function() {
-        const $this = $(this);
-        const originalTimestamp = $this.text();
-        // 验证是否是时间戳格式 (YYYY-MM-DD HH:MM:SS)
-        const timestampRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
-        if (timestampRegex.test(originalTimestamp)) {
-          try {
-            const date = new Date(originalTimestamp);
-            if (!isNaN(date.getTime())) {
-              const formattedTime = formatDate(date);
-              $this.text(formattedTime);
-            }
-          } catch (e) {
-            // 如果解析失败，保持原始时间戳
-          }
-        }
-      });
+
+      // 自动伸缩输入框
+      if ($input[0]) autoGrowTextarea($input[0]);
+
+      // 默认滚到底部
+      scrollToBottom();
     });
   </script>
 </body>

@@ -1,59 +1,276 @@
 {% extends "base.html" %}
 {% block title %}菜品详情 - {{ dish.name }}{% endblock %}
-{% block body_class %}light-bg{% endblock %}
+
 {% block content %}
-<div class="card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex align-items-center gap-3">
-            {% if dish.image_path %}
-            <img src="{{ url_for('static', filename=dish.image_path) }}"
-                style="width:96px;height:96px;border-radius:16px;object-fit:cover;">
-            {% endif %}
-            <div>
-                <h4 class="mb-1">{{ dish.name }}</h4>
-                <div class="text-success fw-bold">¥{{ '%.2f'|format(dish.price) }}</div>
-                <div class="text-muted small">所属餐厅：{{ restaurant.name }}</div>
-            </div>
-        </div>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
-            <a class="btn btn-outline-secondary"
-                href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">返回菜单</a>
-            <a class="btn btn-success" href="{{ url_for('order.view_cart', restaurant_id=restaurant.id) }}">我的餐桌</a>
-        </div>
-    </div>
+<style>
+  .page-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .dish-chip{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+  }
+  .dish-img{
+    width:96px;height:96px;border-radius:18px;object-fit:cover;
+    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(17,24,39,.04);
+    flex-shrink:0;
+  }
+  .dish-title{
+    font-weight: 900;
+    margin:0;
+    color:#111827;
+    line-height: 1.15;
+  }
+  .dish-sub{
+    margin: 6px 0 0 0;
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+  }
+  .price{
+    font-weight: 900;
+    color: #B45309;
+    font-size: 1.1rem;
+    margin-top: 4px;
+  }
+  .toolbar{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 
-    <div class="mb-3 text-muted" style="line-height:1.6;">{{ dish.description }}</div>
+  .panel-card{ overflow:hidden; }
+  .panel-head{
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(245,158,11,.05));
+    border-bottom: 1px solid rgba(17,24,39,.06);
+  }
+  .panel-title{
+    margin:0;
+    font-weight: 900;
+  }
+  .panel-desc{
+    margin: 4px 0 0 0;
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+  }
 
-    <form class="d-flex gap-2 mb-4" method="post"
-        action="{{ url_for('order.add_to_cart', restaurant_id=restaurant.id) }}">
-        <input type="hidden" name="dish_id" value="{{ dish.id }}">
-        <input class="form-control" style="max-width:120px;" name="quantity" type="number" min="1" value="1">
-        <button class="btn btn-primary">加入我的餐桌</button>
-    </form>
+  .desc{
+    color: rgba(17,24,39,.70);
+    line-height: 1.7;
+    white-space: pre-line;
+  }
 
-    <hr>
-    <h5 class="mb-3">询问</h5>
-    <form method="post" action="{{ url_for('order.ask_dish', restaurant_id=restaurant.id, dish_id=dish.id) }}"
-        class="vstack gap-2 mb-3">
-        <textarea class="form-control" name="question" rows="3" placeholder="想问关于该菜品或其他菜品的问题"></textarea>
-        <button class="btn btn-outline-info">发送</button>
-    </form>
+  .buy-box{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items:center;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(17,24,39,.06);
+    background: rgba(255,255,255,.75);
+  }
+  .qty-input{ width: 120px; }
 
-    {% if chats %}
-    <div class="list-group">
-        {% for c in chats %}
-        <div class="list-group-item list-group-item-action">
-            <div class="d-flex justify-content-between">
-                <div class="fw-bold">{{ '你' if c.role=='user' else '顾问' }}</div>
-                <div class="text-muted small">{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-            </div>
-            <div class="mt-1" style="white-space:pre-line;">{{ c.content }}</div>
-        </div>
-        {% endfor %}
-    </div>
+  .ask-card{
+    border: 1px solid rgba(17,24,39,.06);
+    border-radius: 16px;
+    background: rgba(255,255,255,.85);
+    box-shadow: 0 10px 18px rgba(17,24,39,.06);
+    overflow:hidden;
+  }
+  .ask-head{
+    padding: 12px 14px;
+    background: rgba(17,24,39,.02);
+    border-bottom: 1px solid rgba(17,24,39,.06);
+  }
+  .ask-title{ margin:0; font-weight: 900; }
+  .ask-sub{
+    margin: 4px 0 0 0;
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+  }
+  .ask-body{ padding: 12px 14px 14px 14px; }
+
+  textarea.auto-grow{
+    min-height: 44px;
+    max-height: 180px;
+    overflow: hidden;
+    resize: none;
+  }
+
+  /* 对话区：固定高度滚动，避免整页被拉长 */
+  .chat-box{
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(17,24,39,.06);
+    background: rgba(255,255,255,.65);
+    max-height: 360px;
+    overflow: auto;
+  }
+
+  .chat-wrap{
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .chat-row{
+    display:flex;
+    align-items:flex-end;
+  }
+  .chat-row.me{ justify-content:flex-end; }
+  .chat-row.bot{ justify-content:flex-start; }
+
+  .bubble{
+    /* 更宽，减少换行 */
+    max-width: min(720px, 96%);
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(17,24,39,.06);
+    box-shadow: 0 6px 14px rgba(17,24,39,.05);
+
+    /* 关键：不展示“前置空行”的视觉空白 */
+    white-space: normal;
+
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .bubble.me{
+    background: rgba(37,99,235,.10);
+    border-color: rgba(37,99,235,.18);
+    border-bottom-right-radius: 6px;
+  }
+  .bubble.bot{
+    background: rgba(255,255,255,.92);
+    border-bottom-left-radius: 6px;
+  }
+
+  .meta{
+    font-size: .78rem;
+    color: rgba(17,24,39,.55);
+    margin-top: 2px;
+  }
+  .empty-box{ border-radius: 14px; }
+</style>
+
+<!-- 顶部 -->
+<div class="page-head">
+  <div class="dish-chip">
+    {% if dish.image_path %}
+      <img class="dish-img" src="{{ url_for('static', filename=dish.image_path) }}" alt="{{ dish.name }}">
     {% else %}
-    <div class="text-muted">暂无对话，快来提问吧。</div>
+      <div class="dish-img d-flex align-items-center justify-content-center text-muted">无图</div>
     {% endif %}
+    <div>
+      <h2 class="dish-title">{{ dish.name }}</h2>
+      <div class="price">¥{{ '%.2f'|format(dish.price) }}</div>
+      <p class="dish-sub">所属餐厅：{{ restaurant.name }}</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <a class="btn btn-outline-light" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
+    <a class="btn btn-outline-light" href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">返回菜单</a>
+    <a class="btn btn-primary" href="{{ url_for('order.view_cart', restaurant_id=restaurant.id) }}">我的餐桌</a>
+  </div>
 </div>
+
+<!-- 主体 -->
+<div class="card panel-card">
+  <div class="panel-head">
+    <div class="panel-title">菜品介绍</div>
+    <div class="panel-desc">查看详情、加入餐桌，或向顾问询问</div>
+  </div>
+
+  <div class="card-body p-4">
+    <div class="desc mb-3">{{ dish.description }}</div>
+
+    <!-- 加入餐桌 -->
+    <div class="buy-box mb-4">
+      <form method="post"
+            action="{{ url_for('order.add_to_cart', restaurant_id=restaurant.id) }}"
+            class="d-flex gap-2 align-items-center m-0">
+        <input type="hidden" name="dish_id" value="{{ dish.id }}">
+        <input class="form-control qty-input" name="quantity" type="number" min="1" value="1">
+        <button class="btn btn-primary" type="submit">加入我的餐桌</button>
+      </form>
+      <div class="text-muted small">加入后可统一结算</div>
+    </div>
+
+    <!-- 询问 -->
+    <div class="ask-card">
+      <div class="ask-head">
+        <p class="ask-title">询问顾问</p>
+        <p class="ask-sub">可以询问口味、搭配或其他菜品</p>
+      </div>
+
+      <div class="ask-body">
+        <form method="post"
+              action="{{ url_for('order.ask_dish', restaurant_id=restaurant.id, dish_id=dish.id) }}"
+              class="vstack gap-2">
+          <textarea class="form-control auto-grow"
+                    name="question"
+                    rows="1"
+                    placeholder="例如：这道菜好吃吗？偏甜还是偏辣？理解一下口味～"></textarea>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-outline-light" type="submit">发送</button>
+          </div>
+        </form>
+
+        {% if chats %}
+          <div class="chat-box" id="chatBox">
+            <div class="chat-wrap">
+              {# ✅ 关键修复：按插入顺序（id）排序，保证“先问后答” #}
+              {% for c in chats|list|sort(attribute='id') %}
+                <div class="chat-row {% if c.role=='user' %}me{% else %}bot{% endif %}">
+                  <div>
+                    <div class="bubble {% if c.role=='user' %}me{% else %}bot{% endif %}">
+                      {{ c.content|replace('\r','')|trim }}
+                    </div>
+                    <div class="meta {% if c.role=='user' %}text-end{% endif %}">
+                      {{ '你' if c.role=='user' else '顾问' }} · {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-light border empty-box mt-3 mb-0">
+            <div class="fw-bold mb-1">暂无对话</div>
+            <div class="small text-muted">快来提问吧～</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // 输入框自动增高
+  const ta = document.querySelector('textarea.auto-grow');
+  if(ta){
+    const resize = ()=>{
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 180) + 'px';
+    };
+    ta.addEventListener('input', resize);
+    resize();
+  }
+
+  // 打开页面滚到最新
+  const chatBox = document.getElementById('chatBox');
+  if(chatBox){
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+})();
+</script>
 {% endblock %}

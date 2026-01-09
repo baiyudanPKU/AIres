@@ -1,31 +1,119 @@
 {% extends "base.html" %}
 {% block title %}注册{% endblock %}
+
 {% block content %}
-<div class="card p-4">
-  <h3 class="mb-3">注册</h3>
-  <form method="post" enctype="multipart/form-data">
-    <div class="mb-3">
-      <label class="form-label">用户名</label>
-      <input class="form-control" name="username" required>
+<style>
+  /* 仅作用于注册页：A 方案平台风（与登录页同款） */
+  .auth-wrap{
+    min-height: calc(100vh - 220px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 10px 12px;
+  }
+
+  .auth-card{
+    width: 100%;
+    max-width: 520px;
+    border: 1px solid rgba(17,24,39,.06);
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(17,24,39,.08);
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .auth-header{
+    padding: 18px 20px 14px 20px;
+    background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(245,158,11,.06));
+    border-bottom: 1px solid rgba(17,24,39,.06);
+  }
+
+  .auth-title{
+    margin: 0 0 4px 0;
+    font-weight: 900;
+    letter-spacing: .2px;
+    color: #111827;
+  }
+
+  .auth-subtitle{
+    margin:0;
+    color: rgba(17,24,39,.62);
+    font-size: .95rem;
+  }
+
+  .auth-body{
+    padding: 18px 20px 20px 20px;
+  }
+
+  .helper{
+    margin-top: 6px;
+    font-size: .9rem;
+    color: rgba(17,24,39,.62);
+  }
+
+  .auth-footer{
+    margin-top: 14px;
+    text-align: center;
+    color: rgba(17,24,39,.62);
+    font-size: .95rem;
+  }
+  .auth-footer a{
+    font-weight: 800;
+  }
+
+  .btn-primary{
+    transition: transform .08s ease, filter .08s ease;
+  }
+
+  /* 让文件上传控件更像产品 */
+  input[type="file"].form-control{
+    padding: 8px 12px;
+  }
+</style>
+
+<div class="auth-wrap">
+  <div class="card auth-card">
+
+    <div class="auth-header">
+      <h3 class="auth-title">创建账号</h3>
+      <p class="auth-subtitle">注册后即可创建餐厅或开始点餐</p>
     </div>
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">密码</label>
-        <input class="form-control" name="password" type="password" required>
+
+    <div class="auth-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        <div class="mb-3">
+          <label class="form-label">用户名</label>
+          <input class="form-control" name="username" placeholder="设置一个用户名" autocomplete="username" required>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">密码</label>
+            <input class="form-control" name="password" type="password"
+                   placeholder="请输入密码" autocomplete="new-password" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">确认密码</label>
+            <input class="form-control" name="confirm" type="password"
+                   placeholder="再次输入密码" autocomplete="new-password" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">头像</label>
+          <input class="form-control" name="avatar" type="file" accept="image/*" required>
+          <div class="helper">图片会自动缩略到 100×100 内</div>
+        </div>
+
+        <button class="btn btn-primary w-100" type="submit">注册</button>
+      </form>
+
+      <div class="auth-footer">
+        已有账号？ <a href="{{ url_for('auth.login') }}">去登录</a>
       </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">确认密码</label>
-        <input class="form-control" name="confirm" type="password" required>
-      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label">头像（会自动缩略到 100×100 内）</label>
-      <input class="form-control" name="avatar" type="file" accept="image/*" required>
-    </div>
-    <button class="btn btn-primary w-100">注册</button>
-  </form>
-  <div class="mt-3 text-muted">
-    已有账号？ <a href="{{ url_for('auth.login') }}">去登录</a>
+
   </div>
 </div>
 {% endblock %}

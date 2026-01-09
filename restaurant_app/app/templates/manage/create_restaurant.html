@@ -1,40 +1,90 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>创建餐厅</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-  <div class="container py-5" style="max-width: 720px;">
-    <div class="card shadow-sm rounded-4">
-      <div class="card-body p-4 p-md-5">
-        <h3 class="fw-bold mb-2">创建餐厅</h3>
-        <p class="text-muted mb-4">首次进入管理端需要创建你的餐厅。</p>
+{% extends "base.html" %}
+{% block title %}创建餐厅{% endblock %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, msg in messages %}
-              <div class="alert alert-{{ 'warning' if category=='danger' else category }} py-2">{{ msg }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+{% block content %}
+<style>
+  /* 仅作用于本页 */
+  .auth-wrap{
+    min-height: calc(100vh - 220px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 10px 12px;
+  }
 
-        <form method="post" enctype="multipart/form-data" class="vstack gap-3">
-          <div>
-            <label class="form-label">餐厅名（不可重名）</label>
-            <input name="name" class="form-control" placeholder="例如：Ares 小馆" required>
-          </div>
-          <div>
-            <label class="form-label">餐厅 Logo（会自动缩略到 100×100 内）</label>
-            <input type="file" name="logo" class="form-control" accept="image/*" required>
-          </div>
-          <button class="btn btn-primary btn-lg rounded-3">创建</button>
-          <a class="btn btn-outline-secondary rounded-3" href="/">返回首页</a>
-        </form>
-      </div>
+  .panel-card{
+    width: 100%;
+    max-width: 720px;
+    overflow: hidden;
+  }
+
+  .panel-head{
+    padding: 18px 20px 14px 20px;
+    background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(245,158,11,.06));
+    border-bottom: 1px solid rgba(17,24,39,.06);
+  }
+
+  .panel-title{
+    margin: 0 0 4px 0;
+    font-weight: 900;
+    letter-spacing: .2px;
+    color:#111827;
+  }
+
+  .panel-subtitle{
+    margin:0;
+    color: rgba(17,24,39,.62);
+    font-size: .95rem;
+  }
+
+  .panel-body{
+    padding: 18px 20px 20px 20px;
+  }
+
+  .helper{
+    margin-top: 6px;
+    font-size: .9rem;
+    color: rgba(17,24,39,.62);
+  }
+
+  input[type="file"].form-control{
+    padding: 8px 12px;
+  }
+
+  .actions{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+</style>
+
+<div class="auth-wrap">
+  <div class="card panel-card">
+    <div class="panel-head">
+      <h3 class="panel-title">创建餐厅</h3>
+      <p class="panel-subtitle">首次进入管理端需要创建你的餐厅信息</p>
+    </div>
+
+    <div class="panel-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        <div class="mb-3">
+          <label class="form-label">餐厅名（不可重名）</label>
+          <input name="name" class="form-control" placeholder="例如：Ares 小馆" maxlength="80" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">餐厅 Logo</label>
+          <input type="file" name="logo" class="form-control" accept="image/*" required>
+          <div class="helper">图片会自动缩略到 100×100 内，用于列表展示</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">创建</button>
+          <a class="btn btn-outline-light" href="/">返回首页</a>
+        </div>
+      </form>
     </div>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}

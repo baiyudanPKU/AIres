@@ -1,83 +1,232 @@
 {% extends "base.html" %}
 {% block title %}我的餐桌 - {{ restaurant.name }}{% endblock %}
-{% block body_class %}light-bg{% endblock %}
+
 {% block content %}
+<style>
+  /* 顶部信息区 */
+  .cart-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .cart-title{
+    margin:0;
+    font-weight: 900;
+    color:#111827;
+    letter-spacing:.2px;
+  }
+  .cart-sub{
+    margin: 6px 0 0 0;
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+  }
+  .cart-actions{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content:flex-end;
+  }
+
+  /* 表格更“购物车” */
+  .table thead th{
+    font-size:.86rem;
+    color: rgba(17,24,39,.62);
+    font-weight: 800;
+    border-bottom: 1px solid rgba(17,24,39,.08) !important;
+  }
+  .table tbody td{
+    vertical-align: middle;
+    border-top: 1px solid rgba(17,24,39,.06);
+  }
+
+  .dish-thumb{
+    width:56px;height:56px;border-radius:12px;object-fit:cover;
+    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(17,24,39,.04);
+    flex-shrink:0;
+  }
+  .dish-name{ font-weight: 900; color:#111827; }
+  .dish-desc{ color: rgba(17,24,39,.62); font-size:.86rem; line-height:1.4; }
+
+  /* 数量步进器（更紧凑，更像电商） */
+  .qty-stepper{
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(255,255,255,.72);
+  }
+  .qty-stepper .btn{
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .qty-num{
+    min-width: 28px;
+    text-align:center;
+    font-weight: 900;
+    color:#111827;
+  }
+
+  /* 小计、单价对齐 */
+  .money{
+    font-weight: 900;
+    color:#111827;
+    white-space: nowrap;
+  }
+  .money-muted{
+    color: rgba(17,24,39,.62);
+    white-space: nowrap;
+  }
+
+  /* 结算条（吸底） */
+  .checkout-bar{
+    position: sticky;
+    bottom: 0;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(17,24,39,.06);
+    background: rgba(255,255,255,.86);
+    box-shadow: 0 12px 26px rgba(17,24,39,.08);
+    backdrop-filter: blur(10px);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+  }
+  .total-label{
+    color: rgba(17,24,39,.62);
+    font-weight: 800;
+    margin-right: 8px;
+  }
+  .total-amt{
+    font-weight: 900;
+    color: #B45309;
+    font-size: 1.15rem;
+    white-space: nowrap;
+  }
+
+  /* 空状态 */
+  .empty-card{
+    border: 1px dashed rgba(17,24,39,.18);
+    border-radius: 16px;
+    padding: 18px;
+    background: rgba(255,255,255,.75);
+  }
+</style>
+
 <div class="card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">我的餐桌 - {{ restaurant.name }}</h4>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
-            <a class="btn btn-outline-secondary"
-                href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">继续点餐</a>
-        </div>
+
+  <!-- 顶部 -->
+  <div class="cart-head">
+    <div>
+      <h3 class="cart-title">我的餐桌</h3>
+      <p class="cart-sub">
+        当前餐厅：<span class="fw-semibold">{{ restaurant.name }}</span> · 可在这里调整份数并结算
+      </p>
+    </div>
+    <div class="cart-actions">
+      <a class="btn btn-outline-light" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
+      <a class="btn btn-outline-light" href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">继续点餐</a>
+    </div>
+  </div>
+
+  {% if items %}
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th style="min-width: 320px;">菜品</th>
+          <th>单价</th>
+          <th style="min-width: 180px;">份数</th>
+          <th>小计</th>
+          <th class="text-end">操作</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for it in items %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              {% if it.dish.image_path %}
+                <img class="dish-thumb" src="{{ url_for('static', filename=it.dish.image_path) }}" alt="{{ it.dish.name }}">
+              {% else %}
+                <div class="dish-thumb d-flex align-items-center justify-content-center text-muted">无图</div>
+              {% endif %}
+
+              <div>
+                <div class="dish-name">{{ it.dish.name }}</div>
+                <div class="dish-desc">
+                  {{ it.dish.description[:60] }}{% if it.dish.description and it.dish.description|length>60 %}...{% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <td class="money-muted">¥{{ '%.2f'|format(it.dish.price) }}</td>
+
+          <td>
+            <div class="qty-stepper">
+              <form method="post" action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}" class="m-0">
+                <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
+                <input type="hidden" name="action" value="dec">
+                <button class="btn btn-sm btn-outline-light" type="submit">−</button>
+              </form>
+
+              <span class="qty-num">{{ it.qty }}</span>
+
+              <form method="post" action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}" class="m-0">
+                <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
+                <input type="hidden" name="action" value="inc">
+                <button class="btn btn-sm btn-outline-light" type="submit">+</button>
+              </form>
+            </div>
+          </td>
+
+          <td class="money">¥{{ '%.2f'|format(it.line_total) }}</td>
+
+          <td class="text-end">
+            <form method="post" action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}" class="m-0">
+              <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
+              <input type="hidden" name="action" value="remove">
+              <button class="btn btn-sm btn-outline-danger" type="submit"
+                      onclick="return confirm('确定移除「{{ it.dish.name }}」吗？');">
+                移除
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 结算条（吸底） -->
+  <div class="checkout-bar">
+    <div>
+      <span class="total-label">总价</span>
+      <span class="total-amt">¥{{ '%.2f'|format(total) }}</span>
     </div>
 
-    {% if items %}
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>菜品</th>
-                    <th>单价</th>
-                    <th>份数</th>
-                    <th>小计</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for it in items %}
-                <tr>
-                    <td class="d-flex align-items-center gap-2">
-                        {% if it.dish.image_path %}
-                        <img src="{{ url_for('static', filename=it.dish.image_path) }}"
-                            style="width:56px;height:56px;border-radius:10px;object-fit:cover;">
-                        {% endif %}
-                        <div>
-                            <div class="fw-bold">{{ it.dish.name }}</div>
-                            <div class="text-muted small">{{ it.dish.description[:60] }}{% if
-                                it.dish.description|length>60 %}...{% endif %}</div>
-                        </div>
-                    </td>
-                    <td>¥{{ '%.2f'|format(it.dish.price) }}</td>
-                    <td>
-                        <div class="d-flex align-items-center gap-1">
-                            <form method="post"
-                                action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}">
-                                <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
-                                <input type="hidden" name="action" value="dec">
-                                <button class="btn btn-sm btn-outline-secondary">-</button>
-                            </form>
-                            <span class="mx-2">{{ it.qty }}</span>
-                            <form method="post"
-                                action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}">
-                                <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
-                                <input type="hidden" name="action" value="inc">
-                                <button class="btn btn-sm btn-outline-secondary">+</button>
-                            </form>
-                        </div>
-                    </td>
-                    <td>¥{{ '%.2f'|format(it.line_total) }}</td>
-                    <td>
-                        <form method="post" action="{{ url_for('order.update_cart', restaurant_id=restaurant.id) }}">
-                            <input type="hidden" name="dish_id" value="{{ it.dish.id }}">
-                            <input type="hidden" name="action" value="remove">
-                            <button class="btn btn-sm btn-outline-danger">移除</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <form method="post" action="{{ url_for('order.checkout', restaurant_id=restaurant.id) }}" class="m-0">
+      <button class="btn btn-primary btn-lg" type="submit">付款</button>
+    </form>
+  </div>
 
-    <div class="d-flex justify-content-between align-items-center mt-3">
-        <div class="fs-5">总价：<span class="text-success">¥{{ '%.2f'|format(total) }}</span></div>
-        <form method="post" action="{{ url_for('order.checkout', restaurant_id=restaurant.id) }}">
-            <button class="btn btn-success btn-lg">付款</button>
-        </form>
-    </div>
-    {% else %}
-    <div class="alert alert-light border">餐桌为空，先去点点什么吧。</div>
-    {% endif %}
+  {% else %}
+  <div class="empty-card">
+    <div class="fw-bold mb-1">餐桌为空</div>
+    <div class="text-muted small mb-3">先去菜单里挑几样喜欢的吧～</div>
+    <a class="btn btn-primary" href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">去点餐</a>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}

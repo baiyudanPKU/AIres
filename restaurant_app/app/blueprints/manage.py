@@ -110,18 +110,18 @@ def stats():
 
     # 消费者列表（按总消费额）
     consumer_rows = (
-        db.session.query(
-            User,
-            db.func.coalesce(db.func.sum(Order.total_amount), 0).label("total"),
-            db.func.coalesce(db.func.sum(OrderItem.quantity), 0).label("qty"),
-        )
-        .join(Order, Order.user_id == User.id)
-        .join(OrderItem, OrderItem.order_id == Order.id)
-        .filter(Order.restaurant_id == r.id)
-        .group_by(User.id)
-        .order_by(db.desc("total"))
-        .all()
+    db.session.query(
+        User,
+        db.func.coalesce(db.func.sum(OrderItem.quantity * OrderItem.unit_price), 0).label("total"),
+        db.func.coalesce(db.func.sum(OrderItem.quantity), 0).label("qty"),
     )
+    .join(Order, Order.user_id == User.id)
+    .join(OrderItem, OrderItem.order_id == Order.id)
+    .filter(Order.restaurant_id == r.id)
+    .group_by(User.id)
+    .order_by(db.desc("total"))
+    .all()
+)
 
     chart_labels = [d.Dish.name for d in dish_rows]
     chart_qty = [float(d.qty or 0) for d in dish_rows]

@@ -1,16 +1,146 @@
 {% extends "base.html" %}
 {% block title %}付款成功{% endblock %}
-{% block body_class %}light-bg{% endblock %}
+
 {% block content %}
-<div class="card p-4 text-center">
-    <h3 class="mb-2">付款成功</h3>
-    <p class="text-success fw-bold">本次消费 ¥{{ '%.2f'|format(total) }}</p>
-    <p class="text-muted">感谢用餐，祝你用餐愉快！</p>
-    <div class="d-flex justify-content-center gap-2 mt-3">
-        <a class="btn btn-outline-secondary" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
-        <a class="btn btn-outline-secondary"
-            href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">返回菜单</a>
-        <a class="btn btn-primary" href="{{ url_for('order.list_restaurants') }}">去其他餐厅</a>
+<style>
+  .success-wrap{
+    display:flex;
+    justify-content:center;
+    padding: 10px 0;
+  }
+  .success-card{
+    width: 100%;
+    max-width: 560px;
+    overflow: hidden;
+  }
+
+  .success-hero{
+    padding: 18px 18px 14px 18px;
+    background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(37,99,235,.08));
+    border-bottom: 1px solid rgba(17,24,39,.06);
+    text-align:center;
+  }
+  .ok-badge{
+    width: 60px;
+    height: 60px;
+    border-radius: 999px;
+    margin: 0 auto 10px auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(34,197,94,.14);
+    border: 1px solid rgba(34,197,94,.22);
+    box-shadow: 0 10px 20px rgba(17,24,39,.06);
+    font-size: 28px;
+  }
+
+  .success-title{
+    margin: 0;
+    font-weight: 900;
+    color: #111827;
+    letter-spacing: .2px;
+  }
+  .success-sub{
+    margin: 6px 0 0 0;
+    color: rgba(17,24,39,.62);
+    font-size: .95rem;
+  }
+
+  .success-body{
+    padding: 16px 18px 18px 18px;
+    text-align:center;
+  }
+
+  .money-box{
+    display:inline-flex;
+    align-items:baseline;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(17,24,39,.06);
+    background: rgba(255,255,255,.76);
+    box-shadow: 0 10px 18px rgba(17,24,39,.06);
+    margin-top: 8px;
+    margin-bottom: 12px;
+  }
+  .money-label{
+    color: rgba(17,24,39,.62);
+    font-weight: 800;
+    font-size: .92rem;
+  }
+  .money-amt{
+    color: #B45309;
+    font-weight: 900;
+    font-size: 1.35rem;
+    white-space: nowrap;
+  }
+
+  .tips{
+    margin: 10px auto 0 auto;
+    max-width: 440px;
+    text-align:left;
+    border-radius: 14px;
+    border: 1px solid rgba(17,24,39,.06);
+    background: rgba(255,255,255,.72);
+    padding: 12px 14px;
+  }
+  .tips .t-title{
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+  .tips ul{
+    margin: 0;
+    padding-left: 18px;
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+    line-height: 1.55;
+  }
+
+  .actions{
+    display:flex;
+    justify-content:center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  /* 让主按钮更“成功页” */
+  .btn-go{
+    background: var(--p-primary);
+    border-color: var(--p-primary);
+    box-shadow: 0 10px 18px rgba(37,99,235,.18);
+  }
+</style>
+
+<div class="success-wrap">
+  <div class="card success-card">
+    <div class="success-hero">
+      <div class="ok-badge">✅</div>
+      <h3 class="success-title">付款成功</h3>
+      <p class="success-sub">感谢用餐，祝你用餐愉快！</p>
     </div>
+
+    <div class="success-body">
+      <div class="money-box">
+        <span class="money-label">本次消费</span>
+        <span class="money-amt">¥{{ '%.2f'|format(total) }}</span>
+      </div>
+
+      <div class="tips">
+        <div class="t-title">你可以接下来做什么</div>
+        <ul>
+          <li>返回菜单继续加菜，或者去其他餐厅逛逛</li>
+          <li>如果你有“订单列表/历史订单”页面，建议在这里加入口</li>
+        </ul>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-outline-light" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
+        <a class="btn btn-outline-light"
+           href="{{ url_for('order.restaurant_menu', restaurant_id=restaurant.id) }}">返回菜单</a>
+        <a class="btn btn-primary btn-go" href="{{ url_for('order.list_restaurants') }}">去其他餐厅</a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

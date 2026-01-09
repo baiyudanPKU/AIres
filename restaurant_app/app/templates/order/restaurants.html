@@ -1,41 +1,211 @@
 {% extends "base.html" %}
 {% block title %}点餐 - 餐厅列表{% endblock %}
-{% block body_class %}light-bg{% endblock %}
-{% block content %}
-<div class="card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="mb-1">选择餐厅</h4>
-            <div class="text-muted">按销售额排序，点击进入点餐</div>
-        </div>
-        <a class="btn btn-outline-secondary" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
-    </div>
 
+{% block content %}
+<style>
+  /* 顶部信息区 */
+  .page-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .page-title{
+    font-weight: 900;
+    letter-spacing: .2px;
+    margin:0;
+    color:#111827;
+    line-height: 1.1;
+  }
+  .page-sub{
+    margin: 6px 0 0 0;
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+  }
+  .toolbar{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content:flex-end;
+    align-items:center;
+  }
+
+  /* 主卡片 */
+  .panel-card{ overflow:hidden; }
+  .panel-head{
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(245,158,11,.05));
+    border-bottom: 1px solid rgba(17,24,39,.06);
+  }
+
+  /* 餐厅列表 item 卡片 */
+  .shop-card{
+    border: 1px solid rgba(17,24,39,.06);
+    border-radius: 16px;
+    background: rgba(255,255,255,.85);
+    transition: transform .10s ease, box-shadow .10s ease, border-color .10s ease;
+    overflow:hidden;
+    height: 100%;
+  }
+  .shop-card:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(17,24,39,.08);
+    border-color: rgba(17,24,39,.12);
+  }
+
+  /* 整卡可点击：但按钮仍可单独点 */
+  .shop-link{
+    color: inherit;
+    text-decoration: none;
+    display:block;
+    height:100%;
+  }
+  .shop-link:hover{ text-decoration:none; }
+
+  .shop-body{
+    padding: 14px;
+    display:flex;
+    gap: 12px;
+    align-items:center;
+  }
+  .shop-logo{
+    width:64px;height:64px;border-radius:14px;object-fit:cover;
+    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(17,24,39,.04);
+    flex-shrink:0;
+  }
+
+  .shop-name{
+    font-weight: 900;
+    color:#111827;
+    line-height: 1.2;
+    margin:0;
+  }
+  .shop-meta{
+    margin-top: 6px;
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .price{
+    font-weight: 900;
+    color: #B45309;
+  }
+
+  /* 排行徽章 */
+  .rank{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: .8rem;
+    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(255,255,255,.75);
+    color: rgba(17,24,39,.72);
+  }
+  .rank.top1{
+    border-color: rgba(245,158,11,.30);
+    background: rgba(245,158,11,.12);
+    color: #92400e;
+  }
+  .rank.top2{
+    border-color: rgba(37,99,235,.25);
+    background: rgba(37,99,235,.10);
+    color: #1e3a8a;
+  }
+  .rank.top3{
+    border-color: rgba(16,185,129,.25);
+    background: rgba(16,185,129,.10);
+    color: #065f46;
+  }
+
+  .cta{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .arrow{
+    color: rgba(17,24,39,.35);
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+</style>
+
+<!-- 顶部 -->
+<div class="page-head">
+  <div>
+    <h2 class="page-title">选择餐厅</h2>
+    <p class="page-sub">按销售额排序，点击餐厅进入点餐页面</p>
+  </div>
+  <div class="toolbar">
+    <a class="btn btn-outline-light" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
+  </div>
+</div>
+
+<!-- 主内容卡片 -->
+<div class="card panel-card">
+  <div class="panel-head">
+    <div class="fw-bold">餐厅列表</div>
+    <div class="text-muted small">Top 餐厅会显示排行标识</div>
+  </div>
+
+  <div class="card-body p-4">
     {% if rows %}
-    <div class="row g-3">
+      <div class="row g-3">
         {% for r, sales in rows %}
-        <div class="col-12 col-md-6">
-            <div class="card h-100 shadow-sm" style="border-radius:14px;">
-                <div class="card-body d-flex gap-3 align-items-center">
-                    {% if r.logo_path %}
-                    <img src="{{ url_for('static', filename=r.logo_path) }}"
-                        style="width:64px;height:64px;border-radius:14px;object-fit:cover;">
-                    {% else %}
-                    <div class="d-flex align-items-center justify-content-center bg-light"
-                        style="width:64px;height:64px;border-radius:14px;">无图</div>
-                    {% endif %}
-                    <div class="flex-grow-1">
-                        <div class="fw-bold fs-4">{{ r.name }}</div>
-                        <div class="text-muted small">销售额 ¥{{ '%.2f'|format(sales or 0) }}</div>
+          <div class="col-12 col-md-6">
+            <div class="shop-card">
+              <!-- 整卡可点 -->
+              <a class="shop-link" href="{{ url_for('order.restaurant_menu', restaurant_id=r.id) }}">
+                <div class="shop-body">
+                  {% if r.logo_path %}
+                    <img class="shop-logo" src="{{ url_for('static', filename=r.logo_path) }}" alt="{{ r.name }}">
+                  {% else %}
+                    <div class="shop-logo d-flex align-items-center justify-content-center text-muted">无图</div>
+                  {% endif %}
+
+                  <div class="flex-grow-1">
+                    <p class="shop-name">{{ r.name }}</p>
+
+                    <div class="shop-meta">
+                      <!-- 排名徽章：只给前三显示更干净 -->
+                      {% if loop.index == 1 %}
+                        <span class="rank top1">🏆 Top 1</span>
+                      {% elif loop.index == 2 %}
+                        <span class="rank top2">🥈 Top 2</span>
+                      {% elif loop.index == 3 %}
+                        <span class="rank top3">🥉 Top 3</span>
+                      {% endif %}
+
+                      <span class="text-muted">销售额</span>
+                      <span class="price">¥{{ '%.2f'|format(sales or 0) }}</span>
                     </div>
-                    <a class="btn btn-primary" href="{{ url_for('order.restaurant_menu', restaurant_id=r.id) }}">进入</a>
+                  </div>
+
+                  <div class="cta">
+                    <span class="arrow">→</span>
+                    <span class="btn btn-sm btn-primary">进入</span>
+                  </div>
                 </div>
+              </a>
             </div>
-        </div>
+          </div>
         {% endfor %}
-    </div>
+      </div>
     {% else %}
-    <div class="alert alert-light border">暂无餐厅，请先在管理端创建。</div>
+      <div class="alert alert-light border" style="border-radius:14px;">
+        <div class="fw-bold mb-1">暂无餐厅</div>
+        <div class="small text-muted">请先在管理端创建餐厅后再来点餐。</div>
+      </div>
     {% endif %}
+  </div>
 </div>
 {% endblock %}

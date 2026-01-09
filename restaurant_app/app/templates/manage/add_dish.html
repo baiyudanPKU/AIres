@@ -1,46 +1,115 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <title>添加菜品</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-  <h2>添加菜品 - {{ restaurant.name }} / {{ category.name }}</h2>
+{% extends "base.html" %}
+{% block title %}添加菜品{% endblock %}
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <ul>
-        {% for cat, msg in messages %}
-          <li><b>{{ cat }}</b>：{{ msg }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+{% block content %}
+<style>
+  /* 仅作用于本页 */
+  .page-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .page-title{
+    font-weight: 900;
+    letter-spacing: .2px;
+    margin: 0;
+    color:#111827;
+  }
+  .page-subtitle{
+    margin: 4px 0 0 0;
+    color: rgba(17,24,39,.62);
+    font-size: .95rem;
+  }
 
-  <form method="post" enctype="multipart/form-data">
-    <p>
-      <label>菜品名称：</label><br>
-      <input name="name" maxlength="80" required>
+  .form-card{
+    overflow: hidden;
+  }
+
+  .form-card .card-header{
+    background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(245,158,11,.06));
+    border-bottom: 1px solid rgba(17,24,39,.06);
+    padding: 14px 16px;
+  }
+
+  .form-card .card-body{
+    padding: 16px;
+  }
+
+  .helper{
+    margin-top: 6px;
+    font-size: .9rem;
+    color: rgba(17,24,39,.62);
+  }
+
+  .sticky-actions{
+    display:flex;
+    gap: 10px;
+    justify-content:flex-end;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  /* 文件上传控件更舒服 */
+  input[type="file"].form-control{
+    padding: 8px 12px;
+  }
+</style>
+
+<div class="page-head">
+  <div>
+    <h2 class="page-title">添加菜品</h2>
+    <p class="page-subtitle">
+      {{ restaurant.name }} / {{ category.name }}
     </p>
+  </div>
 
-    <p>
-      <label>价格（例如 12.50）：</label><br>
-      <input name="price" required>
-    </p>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-outline-light" href="{{ url_for('manage.index') }}">返回管理首页</a>
+  </div>
+</div>
 
-    <p>
-      <label>菜品介绍（≤500字）：</label><br>
-      <textarea name="description" maxlength="500" rows="6" required></textarea>
-    </p>
+<div class="card form-card">
+  <div class="card-header">
+    <div class="fw-bold" style="color:#111827;">填写菜品信息</div>
+    <div class="text-muted small">上架后用户即可在点餐端看到</div>
+  </div>
 
-    <p>
-      <label>菜品图片（会自动缩略到≤100×100）：</label><br>
-      <input type="file" name="image" accept="image/*" required>
-    </p>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      <div class="mb-3">
+        <label class="form-label">菜品名称</label>
+        <input class="form-control" name="name" maxlength="80" placeholder="例如：宫保鸡丁" required>
+      </div>
 
-    <button type="submit">提交</button>
-    <a href="{{ url_for('manage.index') }}">返回管理首页</a>
-  </form>
-</body>
-</html>
+      <div class="mb-3">
+        <label class="form-label">价格</label>
+        <div class="input-group">
+          <span class="input-group-text">¥</span>
+          <input class="form-control" name="price" placeholder="例如：12.50" inputmode="decimal" required>
+        </div>
+        <div class="helper">支持两位小数，如 12.50</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">菜品介绍</label>
+        <textarea class="form-control" name="description" maxlength="500" rows="6"
+                  placeholder="简要介绍口味、用料、特色（≤500字）" required></textarea>
+        <div class="helper">最多 500 字</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">菜品图片</label>
+        <input class="form-control" type="file" name="image" accept="image/*" required>
+        <div class="helper">图片会自动缩略到 ≤100×100（用于列表缩略图展示）</div>
+      </div>
+
+      <div class="sticky-actions">
+        <a class="btn btn-outline-light" href="{{ url_for('manage.index') }}">取消</a>
+        <button class="btn btn-primary" type="submit">提交并上架</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

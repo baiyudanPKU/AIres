@@ -1,122 +1,191 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>选择功能</title>
+{% extends "base.html" %}
+{% block title %}选择功能{% endblock %}
 
-  <!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block content %}
+<style>
+  /* 仅作用于本页：入口分流页组件（A 方案平台风） */
+  .choose-wrap{
+    padding: 6px 0 20px;
+    display:flex;
+    justify-content:center;
+  }
 
-  <style>
-    body{
-      min-height: 100vh;
-      background: radial-gradient(1200px 600px at 20% 10%, #eef5ff 0%, transparent 60%),
-                  radial-gradient(1200px 600px at 80% 0%, #fff0f2 0%, transparent 55%),
-                  linear-gradient(180deg, #f7f9fc 0%, #ffffff 60%);
-    }
-    .brand-chip{
-      display:inline-flex;
-      align-items:center;
-      gap:.5rem;
-      padding:.35rem .75rem;
-      border-radius:999px;
-      background:#fff;
-      border:1px solid rgba(0,0,0,.06);
-      box-shadow: 0 10px 30px rgba(0,0,0,.06);
-      font-weight:600;
-    }
-    .glass-card{
-      background: rgba(255,255,255,.75);
-      border: 1px solid rgba(0,0,0,.06);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 20px 60px rgba(0,0,0,.08);
-      border-radius: 18px;
-    }
-    .big-action{
-      border-radius: 14px;
-      padding: 16px 18px;
-      font-weight: 700;
-      font-size: 1.05rem;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      text-decoration:none;
-    }
-    .big-action small{ font-weight:500; opacity:.85; }
-    .avatar{
-      width:44px; height:44px; border-radius:50%;
-      object-fit: cover;
-      border: 2px solid rgba(0,0,0,.06);
-      background:#fff;
-    }
-  </style>
-</head>
+  .choose-card{
+    width: 100%;
+    max-width: 620px;
+  }
 
-<body>
-  <nav class="container py-4 d-flex justify-content-between align-items-center">
-    <div class="brand-chip">
-      🍽️ Restaurant App
-      <span class="text-muted" style="font-weight:500;">Dashboard</span>
-    </div>
-    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('auth.logout') }}">退出登录</a>
-  </nav>
+  .user-chip{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+  }
 
-  <main class="container pb-5">
-    <div class="row justify-content-center">
-      <div class="col-12 col-md-8 col-lg-6">
-        <div class="glass-card p-4 p-md-5">
-          <div class="d-flex align-items-center gap-3 mb-3">
-            {% if user.avatar_path %}
-              <img class="avatar" src="{{ url_for('static', filename=user.avatar_path) }}" alt="avatar">
-            {% else %}
-              <div class="avatar d-flex align-items-center justify-content-center text-muted">🙂</div>
-            {% endif %}
-            <div>
-              <div class="fs-4 fw-bold">欢迎，{{ user.username }}</div>
-              <div class="text-muted">请选择你要做什么</div>
-            </div>
-          </div>
+  .avatar{
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 2px solid rgba(17,24,39,.08);
+    background: #fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
 
-          {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-              <div class="mt-3">
-                {% for category, msg in messages %}
-                  <div class="alert alert-{{ 'warning' if category=='danger' else category }} py-2 mb-2" role="alert">
-                    {{ msg }}
-                  </div>
-                {% endfor %}
-              </div>
-            {% endif %}
-          {% endwith %}
+  .action-grid{
+    display: grid;
+    gap: 12px;
+  }
 
-          <div class="mt-4 d-grid gap-3">
-            <a class="big-action btn btn-primary" href="/manage">
-              <div>
-                管理餐厅
-                <div><small>创建餐厅 / 上架菜品 / 报表 / 黑名单</small></div>
-              </div>
-              <span class="fs-4">→</span>
-            </a>
+  /* 大入口按钮：卡片化，信息结构清晰 */
+  .big-action{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 14px;
 
-            <a class="big-action btn btn-success" href="/order">
-              <div>
-                点餐
-                <div><small>浏览餐厅 / 加入餐桌 / 付款下单</small></div>
-              </div>
-              <span class="fs-4">→</span>
-            </a>
-          </div>
+    padding: 16px 16px;
+    border-radius: 16px;
+    text-decoration:none;
 
-          <div class="mt-4 text-center text-muted small">
-            提示：界面美观也计分，后面我们会统一做一套漂亮的布局与组件。
+    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(255,255,255,.92);
+    box-shadow: 0 10px 22px rgba(17,24,39,.06);
+
+    transition: transform .08s ease, box-shadow .08s ease, border-color .08s ease;
+  }
+  .big-action:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(17,24,39,.08);
+    border-color: rgba(17,24,39,.14);
+  }
+  .big-action:active{
+    transform: translateY(0);
+  }
+
+  .big-action .title{
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: #111827;
+    margin-bottom: 2px;
+  }
+  .big-action .desc{
+    color: rgba(17,24,39,.62);
+    font-size: .92rem;
+  }
+
+  /* 左侧小图标块（用颜色区分两个入口） */
+  .icon-pill{
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 1.15rem;
+    flex: 0 0 auto;
+  }
+  .pill-blue{
+    background: rgba(37,99,235,.12);
+    border: 1px solid rgba(37,99,235,.18);
+    color: #237897;
+  }
+  .pill-amber{
+    background: rgba(245,158,11,.12);
+    border: 1px solid rgba(245,158,11,.18);
+    color: #B45309;
+  }
+
+  /* 右侧箭头 */
+  .go{
+    font-size: 1.35rem;
+    color: rgba(17,24,39,.45);
+    flex: 0 0 auto;
+  }
+
+  /* 标题区 */
+  .choose-head{
+    padding: 18px 20px 14px 20px;
+    border-bottom: 1px solid rgba(17,24,39,.06);
+    background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(245,158,11,.06));
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+  }
+
+  .choose-body{
+    padding: 18px 20px 20px 20px;
+  }
+
+  @media (max-width: 576px){
+    .big-action{ padding: 14px 14px; }
+    .icon-pill{ width: 40px; height: 40px; border-radius: 12px; }
+  }
+</style>
+
+<div class="choose-wrap">
+  <div class="card choose-card">
+
+    <div class="choose-head">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="user-chip">
+          {% if user.avatar_path %}
+            <img class="avatar" src="{{ url_for('static', filename=user.avatar_path) }}" alt="avatar">
+          {% else %}
+            <div class="avatar text-muted">🙂</div>
+          {% endif %}
+
+          <div>
+            <div class="fw-bold" style="font-size:1.15rem;color:#111827;">欢迎，{{ user.username }}</div>
+            <div class="text-muted">请选择你要使用的功能</div>
           </div>
         </div>
+
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('auth.logout') }}">退出</a>
       </div>
     </div>
-  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="choose-body">
+
+      {# flash 如果 base.html 已经统一显示，你也可以删掉这一段；保留也不报错，只是会重复显示 #}
+      <!-- {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mt-1 mb-3">
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} py-2 mb-2" role="alert">{{ msg }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %} -->
+
+      <div class="action-grid">
+        <a class="big-action" href="/manage">
+          <div class="d-flex align-items-start gap-14" style="gap:14px;">
+            <div class="icon-pill pill-blue">🏪</div>
+            <div>
+              <div class="title">商家端：管理餐厅</div>
+              <div class="desc">创建餐厅 · 上架菜品 · 处理订单 · 黑名单</div>
+            </div>
+          </div>
+          <div class="go">→</div>
+        </a>
+
+        <a class="big-action" href="/order">
+          <div class="d-flex align-items-start" style="gap:14px;">
+            <div class="icon-pill pill-amber">🧾</div>
+            <div>
+              <div class="title">用户端：开始点餐</div>
+              <div class="desc">浏览餐厅 · 选择菜品 · 下单支付 · 查看进度</div>
+            </div>
+          </div>
+          <div class="go">→</div>
+        </a>
+      </div>
+
+      <div class="mt-3 text-center text-muted small">
+        你也可以稍后在页面内切换入口；平台会根据你的操作进入相应流程。
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
