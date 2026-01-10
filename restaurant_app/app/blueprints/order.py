@@ -1,5 +1,5 @@
 import decimal
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort,jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort,jsonify, current_app
 
 
 from flask_login import login_required, current_user
@@ -7,6 +7,9 @@ from sqlalchemy import func, desc
 
 from app import db
 from app.models import Restaurant, Category, Dish, Order, OrderItem, ChatMessage, Blacklist
+from app.config import Config
+import requests
+import json
 
 bp = Blueprint("order", __name__, url_prefix="/order")
 
@@ -184,11 +187,17 @@ def _get_sales_snapshot(restaurant_id, dish_id, top_n=5):
 
 
 def _call_ai_for_dish(user_id, restaurant, dish, question):
-    # ✅ 这里复用你商家端同一套网关
-    GATEWAY_BASE_URL = "https://chat.noc.pku.edu.cn"
-    GATEWAY_API_KEY = "GuoWeiCourse_tGv4UT02q7q7"
-    MODEL_NAME = "deepseek-v3-250324"
-    API_ENDPOINT = f"{GATEWAY_BASE_URL}/v1/chat/completions"
+    """调用AI API为菜品提供建议
+    
+    支持两种模式：
+    1. 如果设置了 DEEPSEEK_API_KEY 环境变量，使用 DeepSeek API
+    2. 否则使用默认的北大网关 API
+    """
+    # 从配置中读取 API 参数
+    api_key = Config.AI_API_KEY
+    base_url = Config.AI_BASE_URL
+    model_name = Config.AI_MODEL
+    api_endpoint = f"{base_url}/v1/chat/completions"
 
     history = _get_dish_history(user_id, restaurant.id, dish.id)
     # ① 先查餐厅所有菜
@@ -236,11 +245,11 @@ def _call_ai_for_dish(user_id, restaurant, dish, question):
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {GATEWAY_API_KEY}"
+        "Authorization": f"Bearer {api_key}"
     }
 
     data = {
-        "model": MODEL_NAME,
+        "model": model_name,
         "messages": [
             {"role": "system", "content": system_content},
             {"role": "user", "content": question}
@@ -251,7 +260,17 @@ def _call_ai_for_dish(user_id, restaurant, dish, question):
     }
 
     try:
-        resp = requests.post(API_ENDPOINT, headers=headers, json=data, stream=True, timeout=300)
+        current_app.logger.info(
+            "order_ai_call base_url=%s model=%s use_custom_api=%s restaurant_id=%s user_id=%s dish_id=%s",
+            base_url,
+            model_name,
+            bool(Config.USE_CUSTOM_API),
+            restaurant.id,
+            user_id,
+            dish.id,
+        )
+
+        resp = requests.post(api_endpoint, headers=headers, json=data, stream=True, timeout=300)
         resp.raise_for_status()
 
         ai_reply = ""
@@ -276,6 +295,14 @@ def _call_ai_for_dish(user_id, restaurant, dish, question):
         return ai_reply if ai_reply else "我暂时没有生成到有效回答，可以换个问法试试。"
 
     except Exception:
+        current_app.logger.exception(
+            "order_ai_call failed base_url=%s model=%s restaurant_id=%s user_id=%s dish_id=%s",
+            base_url,
+            model_name,
+            restaurant.id,
+            user_id,
+            dish.id,
+        )
         return "AI 暂时不可用，请稍后再试。"
 
 

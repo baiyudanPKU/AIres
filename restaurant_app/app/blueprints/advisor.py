@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models import Restaurant, ChatMessage
+from app.config import Config
 from datetime import datetime
 import requests
 import os
@@ -87,11 +88,17 @@ def get_restaurant_data(restaurant_id):
 
 
 def call_ai_api(prompt, content, user_id, restaurant_id, restaurant_data=None):
-    """调用AI API获取商业顾问回复"""
-    GATEWAY_BASE_URL = "https://chat.noc.pku.edu.cn"
-    GATEWAY_API_KEY = "GuoWeiCourse_tGv4UT02q7q7"
-    MODEL_NAME = "deepseek-v3-250324"
-    API_ENDPOINT = f"{GATEWAY_BASE_URL}/v1/chat/completions"
+    """调用AI API获取商业顾问回复
+    
+    支持两种模式：
+    1. 如果设置了 DEEPSEEK_API_KEY 环境变量，使用 DeepSeek API
+    2. 否则使用默认的北大网关 API
+    """
+    # 从配置中读取 API 参数
+    api_key = Config.AI_API_KEY
+    base_url = Config.AI_BASE_URL
+    model_name = Config.AI_MODEL
+    api_endpoint = f"{base_url}/v1/chat/completions"
 
     # 获取历史对话上下文
     history = get_user_history(user_id, restaurant_id)
@@ -134,11 +141,11 @@ def call_ai_api(prompt, content, user_id, restaurant_id, restaurant_data=None):
     
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {GATEWAY_API_KEY}"
+        "Authorization": f"Bearer {api_key}"
     }
 
     data = {
-        "model": MODEL_NAME,
+        "model": model_name,
         "messages": [
             {"role": "system", "content": system_content},
             {"role": "user", "content": content}  # 直接使用用户输入的内容，而不是组合后的prompt
@@ -149,7 +156,16 @@ def call_ai_api(prompt, content, user_id, restaurant_id, restaurant_data=None):
     }
 
     try:
-        response = requests.post(API_ENDPOINT, headers=headers, json=data, stream=True, timeout=300)
+        current_app.logger.info(
+            "advisor_ai_call base_url=%s model=%s use_custom_api=%s restaurant_id=%s user_id=%s",
+            base_url,
+            model_name,
+            bool(Config.USE_CUSTOM_API),
+            restaurant_id,
+            user_id,
+        )
+
+        response = requests.post(api_endpoint, headers=headers, json=data, stream=True, timeout=300)
         response.raise_for_status()
 
         ai_reply = ""
@@ -174,8 +190,15 @@ def call_ai_api(prompt, content, user_id, restaurant_id, restaurant_data=None):
         return ai_reply.strip()
 
     except Exception as e:
-        print(f"AI API error: {e}")
-        return "商业顾问已收到您的问题: " + user_message_content
+        current_app.logger.exception(
+            "advisor_ai_call failed base_url=%s model=%s restaurant_id=%s user_id=%s",
+            base_url,
+            model_name,
+            restaurant_id,
+            user_id,
+        )
+        return "商业顾问已收到您的问题: " + content
+
 
 
 @bp.route("/chat/<int:restaurant_id>")
