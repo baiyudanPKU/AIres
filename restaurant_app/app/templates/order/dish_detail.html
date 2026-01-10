@@ -3,102 +3,128 @@
 
 {% block content %}
 <style>
-  .page-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     gap: 12px;
     margin-bottom: 14px;
   }
-  .dish-chip{
-    display:flex;
-    align-items:center;
+
+  .dish-chip {
+    display: flex;
+    align-items: center;
     gap: 14px;
   }
-  .dish-img{
-    width:96px;height:96px;border-radius:18px;object-fit:cover;
-    border: 1px solid rgba(17,24,39,.08);
-    background: rgba(17,24,39,.04);
-    flex-shrink:0;
+
+  .dish-img {
+    width: 96px;
+    height: 96px;
+    border-radius: 18px;
+    object-fit: cover;
+    border: 1px solid rgba(17, 24, 39, .08);
+    background: rgba(17, 24, 39, .04);
+    flex-shrink: 0;
   }
-  .dish-title{
+
+  .dish-title {
     font-weight: 900;
-    margin:0;
-    color:#111827;
+    margin: 0;
+    color: #111827;
     line-height: 1.15;
   }
-  .dish-sub{
+
+  .dish-sub {
     margin: 6px 0 0 0;
-    color: rgba(17,24,39,.62);
+    color: rgba(17, 24, 39, .62);
     font-size: .92rem;
   }
-  .price{
+
+  .price {
     font-weight: 900;
     color: #B45309;
     font-size: 1.1rem;
     margin-top: 4px;
   }
-  .toolbar{
-    display:flex;
+
+  .toolbar {
+    display: flex;
     gap: 8px;
     flex-wrap: wrap;
   }
 
-  .panel-card{ overflow:hidden; }
-  .panel-head{
-    padding: 14px 16px;
-    background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(245,158,11,.05));
-    border-bottom: 1px solid rgba(17,24,39,.06);
+  .panel-card {
+    overflow: hidden;
   }
-  .panel-title{
-    margin:0;
+
+  .panel-head {
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, .08), rgba(245, 158, 11, .05));
+    border-bottom: 1px solid rgba(17, 24, 39, .06);
+  }
+
+  .panel-title {
+    margin: 0;
     font-weight: 900;
   }
-  .panel-desc{
+
+  .panel-desc {
     margin: 4px 0 0 0;
-    color: rgba(17,24,39,.62);
+    color: rgba(17, 24, 39, .62);
     font-size: .92rem;
   }
 
-  .desc{
-    color: rgba(17,24,39,.70);
+  .desc {
+    color: rgba(17, 24, 39, .70);
     line-height: 1.7;
     white-space: pre-line;
   }
 
-  .buy-box{
-    display:flex;
+  .buy-box {
+    display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    align-items:center;
+    align-items: center;
     padding: 12px;
     border-radius: 14px;
-    border: 1px solid rgba(17,24,39,.06);
-    background: rgba(255,255,255,.75);
+    border: 1px solid rgba(17, 24, 39, .06);
+    background: rgba(255, 255, 255, .75);
   }
-  .qty-input{ width: 120px; }
 
-  .ask-card{
-    border: 1px solid rgba(17,24,39,.06);
+  .qty-input {
+    width: 120px;
+  }
+
+  .ask-card {
+    border: 1px solid rgba(17, 24, 39, .06);
     border-radius: 16px;
-    background: rgba(255,255,255,.85);
-    box-shadow: 0 10px 18px rgba(17,24,39,.06);
-    overflow:hidden;
+    background: rgba(255, 255, 255, .85);
+    box-shadow: 0 10px 18px rgba(17, 24, 39, .06);
+    overflow: hidden;
   }
-  .ask-head{
+
+  .ask-head {
     padding: 12px 14px;
-    background: rgba(17,24,39,.02);
-    border-bottom: 1px solid rgba(17,24,39,.06);
+    background: rgba(17, 24, 39, .02);
+    border-bottom: 1px solid rgba(17, 24, 39, .06);
   }
-  .ask-title{ margin:0; font-weight: 900; }
-  .ask-sub{
+
+  .ask-title {
+    margin: 0;
+    font-weight: 900;
+  }
+
+  .ask-sub {
     margin: 4px 0 0 0;
-    color: rgba(17,24,39,.62);
+    color: rgba(17, 24, 39, .62);
     font-size: .92rem;
   }
-  .ask-body{ padding: 12px 14px 14px 14px; }
 
-  textarea.auto-grow{
+  .ask-body {
+    padding: 12px 14px 14px 14px;
+  }
+
+  textarea.auto-grow {
     min-height: 44px;
     max-height: 180px;
     overflow: hidden;
@@ -106,35 +132,42 @@
   }
 
   /* 对话区：固定高度滚动，避免整页被拉长 */
-  .chat-box{
+  .chat-box {
     margin-top: 10px;
     padding: 10px;
     border-radius: 14px;
-    border: 1px solid rgba(17,24,39,.06);
-    background: rgba(255,255,255,.65);
+    border: 1px solid rgba(17, 24, 39, .06);
+    background: rgba(255, 255, 255, .65);
     max-height: 360px;
     overflow: auto;
   }
 
-  .chat-wrap{
-    display:flex;
-    flex-direction:column;
+  .chat-wrap {
+    display: flex;
+    flex-direction: column;
     gap: 6px;
   }
-  .chat-row{
-    display:flex;
-    align-items:flex-end;
-  }
-  .chat-row.me{ justify-content:flex-end; }
-  .chat-row.bot{ justify-content:flex-start; }
 
-  .bubble{
+  .chat-row {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .chat-row.me {
+    justify-content: flex-end;
+  }
+
+  .chat-row.bot {
+    justify-content: flex-start;
+  }
+
+  .bubble {
     /* 更宽，减少换行 */
     max-width: min(720px, 96%);
     padding: 10px 12px;
     border-radius: 14px;
-    border: 1px solid rgba(17,24,39,.06);
-    box-shadow: 0 6px 14px rgba(17,24,39,.05);
+    border: 1px solid rgba(17, 24, 39, .06);
+    box-shadow: 0 6px 14px rgba(17, 24, 39, .05);
 
     /* 关键：不展示“前置空行”的视觉空白 */
     white-space: normal;
@@ -142,31 +175,36 @@
     line-height: 1.45;
     word-break: break-word;
   }
-  .bubble.me{
-    background: rgba(37,99,235,.10);
-    border-color: rgba(37,99,235,.18);
+
+  .bubble.me {
+    background: rgba(37, 99, 235, .10);
+    border-color: rgba(37, 99, 235, .18);
     border-bottom-right-radius: 6px;
   }
-  .bubble.bot{
-    background: rgba(255,255,255,.92);
+
+  .bubble.bot {
+    background: rgba(255, 255, 255, .92);
     border-bottom-left-radius: 6px;
   }
 
-  .meta{
+  .meta {
     font-size: .78rem;
-    color: rgba(17,24,39,.55);
+    color: rgba(17, 24, 39, .55);
     margin-top: 2px;
   }
-  .empty-box{ border-radius: 14px; }
+
+  .empty-box {
+    border-radius: 14px;
+  }
 </style>
 
 <!-- 顶部 -->
 <div class="page-head">
   <div class="dish-chip">
     {% if dish.image_path %}
-      <img class="dish-img" src="{{ url_for('static', filename=dish.image_path) }}" alt="{{ dish.name }}">
+    <img class="dish-img" src="{{ url_for('static', filename=dish.image_path) }}" alt="{{ dish.name }}">
     {% else %}
-      <div class="dish-img d-flex align-items-center justify-content-center text-muted">无图</div>
+    <div class="dish-img d-flex align-items-center justify-content-center text-muted">无图</div>
     {% endif %}
     <div>
       <h2 class="dish-title">{{ dish.name }}</h2>
@@ -194,9 +232,8 @@
 
     <!-- 加入餐桌 -->
     <div class="buy-box mb-4">
-      <form method="post"
-            action="{{ url_for('order.add_to_cart', restaurant_id=restaurant.id) }}"
-            class="d-flex gap-2 align-items-center m-0">
+      <form method="post" action="{{ url_for('order.add_to_cart', restaurant_id=restaurant.id) }}"
+        class="d-flex gap-2 align-items-center m-0">
         <input type="hidden" name="dish_id" value="{{ dish.id }}">
         <input class="form-control qty-input" name="quantity" type="number" min="1" value="1">
         <button class="btn btn-primary" type="submit">加入我的餐桌</button>
@@ -205,133 +242,156 @@
     </div>
 
     <!-- 询问 -->
-<div class="ask-card">
-  <div class="ask-head">
-    <p class="ask-title">询问顾问</p>
-    <p class="ask-sub">可以询问口味、搭配或其他菜品</p>
-  </div>
-
-  <div class="ask-body">
-    <!-- 输入区 -->
-    <div class="vstack gap-2">
-      <textarea
-        id="askInput"
-        class="form-control auto-grow"
-        rows="1"
-        placeholder="例如：这道菜偏辣吗？适合第一次来点吗？"></textarea>
-      <div class="d-flex justify-content-end">
-        <button id="askSendBtn" class="btn btn-outline-light">发送</button>
+    <div class="ask-card">
+      <div class="ask-head">
+        <p class="ask-title">询问顾问</p>
+        <p class="ask-sub">可以询问口味、搭配或其他菜品</p>
       </div>
-    </div>
 
-    <!-- 聊天区 -->
-    <div class="chat-box mt-3" id="chatBox">
-      <div class="chat-wrap" id="chatWrap">
-        {% for c in chats %}
-          <div class="chat-row {{ 'me' if c.role=='user' else 'bot' }}">
-            <div>
-              <div class="bubble {{ 'me' if c.role=='user' else 'bot' }}">
-                {{ c.content|trim }}
-              </div>
-              <div class="meta {{ 'text-end' if c.role=='user' }}">
-                {{ '你' if c.role=='user' else '顾问' }}
-                · {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}
+      <div class="ask-body">
+        <!-- 聊天区 -->
+        <div class="chat-box" id="chatBox">
+          <div class="chat-wrap" id="chatWrap">
+            {% for c in chats %}
+            <div class="chat-row {{ 'me' if c.role=='user' else 'bot' }}">
+              <div>
+                <div class="bubble {{ 'me' if c.role=='user' else 'bot' }}">
+                  {{ c.content|trim }}
+                </div>
+                <div class="meta {{ 'text-end' if c.role=='user' }}">
+                  {{ '你' if c.role=='user' else '顾问' }}
+                  · {{ c.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </div>
               </div>
             </div>
+            {% endfor %}
           </div>
-        {% endfor %}
+        </div>
+
+        {% if not chats %}
+        <div class="alert alert-light border empty-box mt-3 mb-0">
+          <div class="fw-bold mb-1">暂无对话</div>
+          <div class="small text-muted">快来提问吧～</div>
+        </div>
+        {% endif %}
+
+        <!-- 输入区置于最下方 -->
+        <div class="vstack gap-2 mt-3">
+          <textarea id="askInput" class="form-control auto-grow" rows="1" placeholder="例如：这道菜偏辣吗？适合第一次来点吗？"></textarea>
+          <div class="d-flex justify-content-end">
+            <button id="askSendBtn" class="btn btn-outline-light">发送</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    {% if not chats %}
-      <div class="alert alert-light border empty-box mt-3 mb-0">
-        <div class="fw-bold mb-1">暂无对话</div>
-        <div class="small text-muted">快来提问吧～</div>
-      </div>
-    {% endif %}
-  </div>
-</div>
+    <script>
+      const input = document.getElementById('askInput');
+      const btn = document.getElementById('askSendBtn');
+      const chatWrap = document.getElementById('chatWrap');
+      let isComposing = false; // 标记输入法组合状态，避免中文拼写时误触发
+      // 将 **文本** 渲染为加粗，但先做基本转义避免注入
+      function renderEmphasis(text) {
+        const escaped = String(text ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        return escaped.replace(/\*\*(.+?)\*\*/g, '<strong class="fw-bold">$1</strong>');
+      }
 
-<script>
-const input = document.getElementById('askInput');
-const btn = document.getElementById('askSendBtn');
-const chatWrap = document.getElementById('chatWrap');
+      function appendMessage(role, content, timeText) {
+        const htmlContent = renderEmphasis(content);
+        const row = document.createElement('div');
+        row.className = 'chat-row ' + (role === 'user' ? 'me' : 'bot');
 
-function appendMessage(role, content, timeText) {
-  const row = document.createElement('div');
-  row.className = 'chat-row ' + (role === 'user' ? 'me' : 'bot');
-
-  row.innerHTML = `
+        row.innerHTML = `
     <div>
-      <div class="bubble ${role === 'user' ? 'me' : 'bot'}">${content}</div>
+      <div class="bubble ${role === 'user' ? 'me' : 'bot'}">${htmlContent}</div>
       <div class="meta ${role === 'user' ? 'text-end' : ''}">
         ${role === 'user' ? '你' : '顾问'} · ${timeText}
       </div>
     </div>
   `;
-  chatWrap.appendChild(row);
-  row.scrollIntoView({ behavior: 'smooth', block: 'end' });
-}
+        chatWrap.appendChild(row);
+        row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
 
-btn.addEventListener('click', () => {
-  const text = input.value.trim();
-  if (!text) return;
+      btn.addEventListener('click', () => {
+        const text = input.value.trim();
+        if (!text) return;
 
-  btn.disabled = true;
-  input.disabled = true;
+        btn.disabled = true;
+        input.disabled = true;
 
-  const now = new Date().toLocaleString('zh-CN', { hour12: false });
+        const now = new Date().toLocaleString('zh-CN', { hour12: false });
 
-  // ① 立刻显示「我」
-  appendMessage('user', text, now);
-  input.value = '';
+        // ① 立刻显示「我」
+        appendMessage('user', text, now);
+        input.value = '';
 
-  fetch("{{ url_for('order.ask_dish', restaurant_id=restaurant.id, dish_id=dish.id) }}", {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ question: text })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status !== 'success') {
-      alert(data.msg || '发送失败');
-      return;
-    }
-    // ② 再显示「顾问」
-    appendMessage('assistant', data.bot_msg.content, data.bot_msg.timestamp);
-  })
-  .finally(() => {
-    btn.disabled = false;
-    input.disabled = false;
-    input.focus();
-  });
-});
-</script>
+        fetch("{{ url_for('order.ask_dish', restaurant_id=restaurant.id, dish_id=dish.id) }}", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ question: text })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status !== 'success') {
+              alert(data.msg || '发送失败');
+              return;
+            }
+            // ② 再显示「顾问」
+            appendMessage('assistant', data.bot_msg.content, data.bot_msg.timestamp);
+          })
+          .finally(() => {
+            btn.disabled = false;
+            input.disabled = false;
+            input.focus();
+          });
+      });
 
-  
-  
-  
+      // 初始渲染：把历史消息的 **文本** 转成加粗
+      chatBox.querySelectorAll('.bubble').forEach(b => {
+        b.innerHTML = renderEmphasis(b.textContent);
+      });
+      // 监听输入法组合，避免中文输入时回车直接发送
+      input.addEventListener('compositionstart', () => { isComposing = true; });
+      input.addEventListener('compositionend', () => { isComposing = false; });
+
+      // 回车发送（Shift+Enter 换行）
+      input.addEventListener('keydown', (e) => {
+        const isEnter = e.key === 'Enter' || e.keyCode === 13;
+        if (!isComposing && isEnter && !e.shiftKey) {
+          e.preventDefault();
+          btn.click();
+        }
+      });
+    </script>
+
+
+
+
   </div>
 </div>
 
 <script>
-(function(){
-  // 输入框自动增高
-  const ta = document.querySelector('textarea.auto-grow');
-  if(ta){
-    const resize = ()=>{
-      ta.style.height = 'auto';
-      ta.style.height = Math.min(ta.scrollHeight, 180) + 'px';
-    };
-    ta.addEventListener('input', resize);
-    resize();
-  }
+  (function () {
+    // 输入框自动增高
+    const ta = document.querySelector('textarea.auto-grow');
+    if (ta) {
+      const resize = () => {
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(ta.scrollHeight, 180) + 'px';
+      };
+      ta.addEventListener('input', resize);
+      resize();
+    }
 
-  // 打开页面滚到最新
-  const chatBox = document.getElementById('chatBox');
-  if(chatBox){
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-})();
+    // 打开页面滚到最新
+    const chatBox = document.getElementById('chatBox');
+    if (chatBox) {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  })();
 </script>
 {% endblock %}

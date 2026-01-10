@@ -4,49 +4,50 @@
 {% block content %}
 <style>
   /* 仅作用于登录页：A 方案平台风（清爽可信） */
-  .auth-wrap{
+  .auth-wrap {
     min-height: calc(100vh - 220px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 10px 12px;
   }
 
-  .auth-card{
+  .auth-card {
     width: 100%;
     max-width: 440px;
-    border: 1px solid rgba(17,24,39,.06);
+    border: 1px solid rgba(17, 24, 39, .06);
     border-radius: 18px;
-    box-shadow: 0 14px 34px rgba(17,24,39,.08);
+    box-shadow: 0 14px 34px rgba(17, 24, 39, .08);
     overflow: hidden;
     background: #fff;
   }
 
-  .auth-header{
+  .auth-header {
     padding: 18px 20px 14px 20px;
-    background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(245,158,11,.06));
-    border-bottom: 1px solid rgba(17,24,39,.06);
+    background: linear-gradient(135deg, rgba(37, 99, 235, .12), rgba(245, 158, 11, .06));
+    border-bottom: 1px solid rgba(17, 24, 39, .06);
   }
 
-  .brand-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
+  .brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     padding: 8px 12px;
     border-radius: 999px;
-    background: rgba(255,255,255,.80);
-    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(255, 255, 255, .80);
+    border: 1px solid rgba(17, 24, 39, .08);
     backdrop-filter: blur(6px);
   }
 
-  .brand-dot{
-    width: 10px; height: 10px;
+  .brand-dot {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: #2563EB;
-    box-shadow: 0 0 0 4px rgba(37,99,235,.14);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .14);
   }
 
-  .auth-title{
+  .auth-title {
     margin-top: 12px;
     margin-bottom: 4px;
     font-weight: 900;
@@ -54,33 +55,34 @@
     color: #111827;
   }
 
-  .auth-subtitle{
-    margin:0;
-    color: rgba(17,24,39,.62);
+  .auth-subtitle {
+    margin: 0;
+    color: rgba(17, 24, 39, .62);
     font-size: .95rem;
   }
 
-  .auth-body{
+  .auth-body {
     padding: 18px 20px 20px 20px;
   }
 
-  .hint{
+  .hint {
     font-size: .9rem;
-    color: rgba(17,24,39,.62);
+    color: rgba(17, 24, 39, .62);
   }
 
-  .auth-footer{
+  .auth-footer {
     margin-top: 14px;
     text-align: center;
-    color: rgba(17,24,39,.62);
+    color: rgba(17, 24, 39, .62);
     font-size: .95rem;
   }
-  .auth-footer a{
+
+  .auth-footer a {
     font-weight: 800;
   }
 
   /* 让按钮 hover 时更稳，不抖动太明显 */
-  .btn-primary{
+  .btn-primary {
     transition: transform .08s ease, filter .08s ease;
   }
 </style>
@@ -107,17 +109,12 @@
 
         <div class="mb-2">
           <label class="form-label">密码</label>
-          <input class="form-control" name="password" type="password"
-                 placeholder="请输入密码" autocomplete="current-password" required>
+          <input class="form-control" name="password" type="password" placeholder="请输入密码"
+            autocomplete="current-password" required>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="1" id="rememberMe" name="remember">
-            <label class="form-check-label hint" for="rememberMe">记住我</label>
-          </div>
-          <a class="hint" href="#" style="text-decoration:none;">忘记密码？</a>
-        </div>
+        <!-- 移除记住我 / 忘记密码 -->
+        <div class="mt-3 mb-3"></div>
 
         <button class="btn btn-primary w-100" type="submit">登录</button>
       </form>

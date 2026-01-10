@@ -4,125 +4,194 @@
 {% block content %}
 <style>
   /* 页面头部 */
-  .page-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     gap: 12px;
     margin-bottom: 14px;
   }
-  .rest-chip{
-    display:flex;
-    align-items:center;
+
+  .rest-chip {
+    display: flex;
+    align-items: center;
     gap: 12px;
   }
-  .rest-logo{
-    width:48px;height:48px;border-radius:12px;object-fit:cover;
-    border: 1px solid rgba(17,24,39,.08);
-    background:#fff;
+
+  .rest-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid rgba(17, 24, 39, .08);
+    background: #fff;
   }
-  .rest-title{
+
+  .rest-title {
     font-weight: 900;
     letter-spacing: .2px;
-    margin:0;
-    color:#111827;
+    margin: 0;
+    color: #111827;
     line-height: 1.1;
   }
-  .rest-sub{
+
+  .rest-sub {
     margin: 4px 0 0 0;
-    color: rgba(17,24,39,.62);
+    color: rgba(17, 24, 39, .62);
     font-size: .92rem;
   }
 
-  .toolbar{
-    display:flex;
+  .toolbar {
+    display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    justify-content:flex-end;
+    justify-content: flex-end;
   }
 
   /* 主卡片 */
-  .panel-card{
+  .panel-card {
     overflow: hidden;
   }
-  .panel-head{
+
+  .panel-head {
     padding: 14px 16px;
-    background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(245,158,11,.05));
-    border-bottom: 1px solid rgba(17,24,39,.06);
+    background: linear-gradient(135deg, rgba(37, 99, 235, .08), rgba(245, 158, 11, .05));
+    border-bottom: 1px solid rgba(17, 24, 39, .06);
   }
-  .panel-title{
-    margin:0;
+
+  .panel-title {
+    margin: 0;
     font-weight: 900;
-    color:#111827;
+    color: #111827;
   }
-  .panel-desc{
+
+  .panel-desc {
     margin: 4px 0 0 0;
-    color: rgba(17,24,39,.62);
+    color: rgba(17, 24, 39, .62);
     font-size: .92rem;
   }
 
   /* 分类 Tabs（平台风 pill） */
-  .nav-pills .nav-link{
+  .nav-pills .nav-link {
     border-radius: 999px;
-    border: 1px solid rgba(17,24,39,.08);
-    background: rgba(255,255,255,.7);
-    color: rgba(17,24,39,.72);
+    border: 1px solid rgba(17, 24, 39, .08);
+    background: rgba(255, 255, 255, .7);
+    color: rgba(17, 24, 39, .72);
     font-weight: 800;
     padding: 8px 12px;
   }
-  .nav-pills .nav-link:hover{
-    background: rgba(17,24,39,.03);
-    border-color: rgba(17,24,39,.14);
+
+  .nav-pills .nav-link:hover {
+    background: rgba(17, 24, 39, .03);
+    border-color: rgba(17, 24, 39, .14);
   }
-  .nav-pills .nav-link.active{
-    background: rgba(37,99,235,.10);
-    border-color: rgba(37,99,235,.22);
+
+  .nav-pills .nav-link.active {
+    background: rgba(37, 99, 235, .10);
+    border-color: rgba(37, 99, 235, .22);
     color: #2563EB;
   }
 
   /* 菜品卡片 */
-  .dish-card{
+  .dish-card {
     transition: transform .10s ease, box-shadow .10s ease, border-color .10s ease;
-    border: 1px solid rgba(17,24,39,.06);
-  }
-  .dish-card:hover{
-    transform: translateY(-1px);
-    box-shadow: 0 14px 28px rgba(17,24,39,.08) !important;
-    border-color: rgba(17,24,39,.12);
+    border: 1px solid rgba(17, 24, 39, .06);
   }
 
-  .dish-thumb{
-    width:84px;
-    height:84px;
+  .dish-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(17, 24, 39, .08) !important;
+    border-color: rgba(17, 24, 39, .12);
+  }
+
+  .dish-thumb {
+    width: 84px;
+    height: 84px;
     border-radius: 14px;
     object-fit: cover;
-    background: rgba(17,24,39,.04);
-    border: 1px solid rgba(17,24,39,.08);
+    background: rgba(17, 24, 39, .04);
+    border: 1px solid rgba(17, 24, 39, .08);
   }
 
-  .price{
+  .price {
     font-weight: 900;
-    color: #B45309; /* 统一用强调色系（橙系），避免 success 绿 */
+    color: #B45309;
+    /* 统一用强调色系（橙系），避免 success 绿 */
   }
 
-  .muted-2{
-    color: rgba(17,24,39,.62);
+  .muted-2 {
+    color: rgba(17, 24, 39, .62);
   }
 
-  .badge-soft{
-    border: 1px solid rgba(17,24,39,.10);
-    background: rgba(17,24,39,.03);
-    color: rgba(17,24,39,.70);
+  .badge-soft {
+    border: 1px solid rgba(17, 24, 39, .10);
+    background: rgba(17, 24, 39, .03);
+    color: rgba(17, 24, 39, .70);
     font-weight: 800;
     border-radius: 999px;
     padding: 6px 10px;
   }
 
   /* Modal 里的输入宽度在小屏更友好 */
-  .bl-input{ width: 220px; }
-  .bl-select{ width: 240px; }
-  @media (max-width: 576px){
-    .bl-input,.bl-select{ width: 100%; }
+  .bl-input {
+    width: 220px;
+  }
+
+  .bl-select {
+    width: 240px;
+  }
+
+  /* 自定义黑名单弹窗，避免依赖 bootstrap JS 与 unsafe-eval */
+  .bl-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 16px;
+  }
+
+  .bl-overlay.show {
+    display: flex;
+  }
+
+  .bl-modal {
+    width: min(920px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  }
+
+  .bl-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(17, 24, 39, .08);
+  }
+
+  .bl-modal-body {
+    padding: 16px;
+  }
+
+  .bl-close {
+    border: 0;
+    background: transparent;
+    font-size: 20px;
+    line-height: 1;
+    color: #6b7280;
+  }
+
+  @media (max-width: 576px) {
+
+    .bl-input,
+    .bl-select {
+      width: 100%;
+    }
   }
 </style>
 
@@ -130,7 +199,7 @@
 <div class="page-head">
   <div class="rest-chip">
     {% if restaurant.logo_path %}
-      <img class="rest-logo" src="{{ url_for('static', filename=restaurant.logo_path) }}" alt="logo">
+    <img class="rest-logo" src="{{ url_for('static', filename=restaurant.logo_path) }}" alt="logo">
     {% endif %}
     <div>
       <h2 class="rest-title">{{ restaurant.name }}</h2>
@@ -142,7 +211,7 @@
     <a class="btn btn-outline-light" href="{{ url_for('main.dashboard') }}">返回功能选择</a>
     <a class="btn btn-outline-primary" href="{{ url_for('manage.stats') }}">报表与统计</a>
     <a class="btn btn-outline-primary" href="{{ url_for('advisor.chat', restaurant_id=restaurant.id) }}">AI商业顾问</a>
-    <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#blacklistModal">
+    <button id="blacklistTrigger" class="btn btn-outline-danger" type="button">
       黑名单
     </button>
   </div>
@@ -155,7 +224,7 @@
       <div class="panel-desc">点击分类查看菜品；每个分类都可以添加菜品（图 + 价 + ≤500字介绍）</div>
     </div>
 
-    
+
   </div>
 
   <div class="card-body p-4">
@@ -163,18 +232,13 @@
     <!-- 分类 Tabs -->
     <ul class="nav nav-pills gap-2" id="catTabs" role="tablist">
       {% for c in categories %}
-        <li class="nav-item" role="presentation">
-          <button class="nav-link {% if loop.first %}active{% endif %}"
-                  id="tab-{{ c.id }}"
-                  data-bs-toggle="pill"
-                  data-bs-target="#pane-{{ c.id }}"
-                  type="button"
-                  role="tab"
-                  aria-controls="pane-{{ c.id }}"
-                  aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
-            {{ c.name }}
-          </button>
-        </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ c.id }}" data-bs-toggle="pill"
+          data-bs-target="#pane-{{ c.id }}" type="button" role="tab" aria-controls="pane-{{ c.id }}"
+          aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
+          {{ c.name }}
+        </button>
+      </li>
       {% endfor %}
     </ul>
 
@@ -183,174 +247,185 @@
     <!-- Tab 内容 -->
     <div class="tab-content" id="catTabContent">
       {% for c in categories %}
-        <div class="tab-pane fade {% if loop.first %}show active{% endif %}"
-             id="pane-{{ c.id }}"
-             role="tabpanel"
-             aria-labelledby="tab-{{ c.id }}">
+      <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="pane-{{ c.id }}" role="tabpanel"
+        aria-labelledby="tab-{{ c.id }}">
 
-          <!-- 分类头：说明 + 添加按钮 -->
-          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <div>
-              <div class="fw-bold fs-5" style="color:#111827;">{{ c.name }}</div>
-              <div class="small muted-2">在该分类下添加，图片会自动缩略到 100×100 内</div>
-            </div>
-            <a class="btn btn-outline-primary" href="{{ url_for('manage.add_dish', category_id=c.id) }}">
-              + 添加
-            </a>
+        <!-- 分类头：说明 + 添加按钮 -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <div class="fw-bold fs-5" style="color:#111827;">{{ c.name }}</div>
+            <div class="small muted-2">在该分类下添加，图片会自动缩略到 100×100 内</div>
           </div>
+          <a class="btn btn-outline-primary" href="{{ url_for('manage.add_dish', category_id=c.id) }}">
+            + 添加
+          </a>
+        </div>
 
-          {% set dishes = (dishes_map[c.id] if dishes_map is defined and c.id in dishes_map else []) %}
+        {% set dishes = (dishes_map[c.id] if dishes_map is defined and c.id in dishes_map else []) %}
 
-          {% if dishes and dishes|length > 0 %}
-            <div class="row g-3">
-              {% for d in dishes %}
-                <div class="col-12 col-md-6">
-                  <div class="card h-100 dish-card">
-                    <div class="card-body p-3">
-                      <div class="d-flex gap-3">
-                        <div>
-                          {% if d.image_path %}
-                            <img class="dish-thumb" src="{{ url_for('static', filename=d.image_path) }}" alt="{{ d.name }}">
-                          {% else %}
-                            <div class="dish-thumb d-flex align-items-center justify-content-center text-muted">无图</div>
-                          {% endif %}
-                        </div>
+        {% if dishes and dishes|length > 0 %}
+        <div class="row g-3">
+          {% for d in dishes %}
+          <div class="col-12 col-md-6">
+            <div class="card h-100 dish-card">
+              <div class="card-body p-3">
+                <div class="d-flex gap-3">
+                  <div>
+                    {% if d.image_path %}
+                    <img class="dish-thumb" src="{{ url_for('static', filename=d.image_path) }}" alt="{{ d.name }}">
+                    {% else %}
+                    <div class="dish-thumb d-flex align-items-center justify-content-center text-muted">无图</div>
+                    {% endif %}
+                  </div>
 
-                        <div class="flex-grow-1">
-                          <div class="d-flex justify-content-between align-items-start gap-2">
-                            <div class="fw-bold" style="color:#111827;">{{ d.name }}</div>
-                            <div class="price">¥{{ "%.2f"|format(d.price) }}</div>
-                          </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                      <div class="fw-bold" style="color:#111827;">{{ d.name }}</div>
+                      <div class="price">¥{{ "%.2f"|format(d.price) }}</div>
+                    </div>
 
-                          <div class="small text-muted mt-1" style="line-height:1.55;">
-                            {{ d.description[:120] }}{% if d.description and d.description|length > 120 %}...{% endif %}
-                          </div>
+                    <div class="small text-muted mt-1" style="line-height:1.55;">
+                      {{ d.description[:120] }}{% if d.description and d.description|length > 120 %}...{% endif %}
+                    </div>
 
-                          <div class="mt-2 d-flex gap-2 align-items-center flex-wrap">
-                            <span class="badge-soft">已上架</span>
+                    <div class="mt-2 d-flex gap-2 align-items-center flex-wrap">
+                      <span class="badge-soft">已上架</span>
 
-                            <form method="post"
-                                  action="{{ url_for('manage.delete_dish', dish_id=d.id) }}"
-                                  onsubmit="return confirm('确定删除吗？删除后相关点餐记录也会被删除！');"
-                                  style="display:inline;">
-                              <button class="btn btn-sm btn-outline-danger">删除</button>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
+                      <form method="post" action="{{ url_for('manage.delete_dish', dish_id=d.id) }}"
+                        onsubmit="return confirm('确定删除吗？删除后相关点餐记录也会被删除！');" style="display:inline;">
+                        <button class="btn btn-sm btn-outline-danger">删除</button>
+                      </form>
                     </div>
                   </div>
                 </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <div class="alert alert-light border" style="border-radius:14px;">
-              <div class="fw-bold mb-1">该分类暂无菜品</div>
-              <div class="small text-muted">
-                点击右上角 <span class="fw-semibold">“+ 添加菜品”</span> 创建第一道菜。
               </div>
             </div>
-          {% endif %}
-
+          </div>
+          {% endfor %}
         </div>
+        {% else %}
+        <div class="alert alert-light border" style="border-radius:14px;">
+          <div class="fw-bold mb-1">该分类暂无菜品</div>
+          <div class="small text-muted">
+            点击右上角 <span class="fw-semibold">“+ 添加菜品”</span> 创建第一道菜。
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
       {% endfor %}
     </div>
 
     <hr class="my-4">
 
-    
+
 
   </div>
 </div>
 
-<!-- 黑名单 Modal（保留你的逻辑，只做轻度样式统一） -->
-<div class="modal fade" id="blacklistModal" tabindex="-1" aria-labelledby="blacklistModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content" style="border-radius:18px;">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="blacklistModalLabel">黑名单</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+<!-- 黑名单：自定义遮罩弹窗，避免 CSP 阻止 bootstrap JS -->
+<div id="blacklistOverlay" class="bl-overlay" aria-hidden="true">
+  <div class="bl-modal">
+    <div class="bl-modal-header">
+      <h5 class="modal-title fw-bold mb-0">黑名单</h5>
+      <button type="button" class="bl-close js-close-blacklist" aria-label="Close">×</button>
+    </div>
+    <div class="bl-modal-body">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+        <div class="text-muted small">拉黑的用户将无法在点餐端下单，会收到提示</div>
 
-      <div class="modal-body">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-          <div class="text-muted small">拉黑的用户将无法在点餐端下单，会收到提示</div>
+        <div class="d-flex flex-column flex-md-row gap-2 w-100 justify-content-md-end">
+          <form class="d-flex gap-2 flex-wrap" method="post" action="{{ url_for('manage.add_blacklist') }}">
+            <input class="form-control bl-input" name="username" placeholder="输入用户名拉黑">
+            <button class="btn btn-danger">加入黑名单</button>
+          </form>
 
-          <div class="d-flex flex-column flex-md-row gap-2 w-100 justify-content-md-end">
-            <form class="d-flex gap-2 flex-wrap" method="post" action="{{ url_for('manage.add_blacklist') }}">
-              <input class="form-control bl-input" name="username" placeholder="输入用户名拉黑">
-              <button class="btn btn-danger">加入黑名单</button>
-            </form>
-
-            {% if visited_users %}
-              <form class="d-flex gap-2 flex-wrap" method="post" action="{{ url_for('manage.add_blacklist') }}">
-                <select class="form-select bl-select" name="user_id" required>
-                  <option value="">选择来过的顾客</option>
-                  {% for u, last_at in visited_users %}
-                    <option value="{{ u.id }}">
-                      {{ u.username }} (ID: {{ u.id }}) - 上次 {{ last_at.strftime('%m-%d %H:%M') if last_at else '' }}
-                    </option>
-                  {% endfor %}
-                </select>
-                <button class="btn btn-outline-danger">拉黑此顾客</button>
-              </form>
-            {% else %}
-              <div class="text-muted small">暂无来店顾客记录</div>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table align-middle mb-0">
-            <thead>
-              <tr>
-                <th>用户</th>
-                <th style="width:120px;">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for bl, u in blacklist_rows %}
-                <tr>
-                  <td class="d-flex align-items-center gap-2">
-                    {% if u.avatar_path %}
-                      <img src="{{ url_for('static', filename=u.avatar_path) }}"
-                           style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(17,24,39,.08);">
-                    {% endif %}
-                    <span class="fw-semibold">{{ u.username }}</span>
-                    <span class="text-muted small">(ID: {{ u.id }})</span>
-                  </td>
-                  <td>
-                    <form method="post"
-                          action="{{ url_for('manage.remove_blacklist', user_id=u.id) }}"
-                          onsubmit="return confirm('确定移出黑名单吗？');">
-                      <button class="btn btn-sm btn-outline-danger">移出</button>
-                    </form>
-                  </td>
-                </tr>
-              {% else %}
-                <tr>
-                  <td colspan="2" class="text-muted">暂无黑名单</td>
-                </tr>
+          {% if visited_users %}
+          <form class="d-flex gap-2 flex-wrap" method="post" action="{{ url_for('manage.add_blacklist') }}">
+            <select class="form-select bl-select" name="user_id" required>
+              <option value="">选择来过的顾客</option>
+              {% for u, last_at in visited_users %}
+              <option value="{{ u.id }}">
+                {{ u.username }} (ID: {{ u.id }}) - 上次 {{ last_at.strftime('%m-%d %H:%M') if last_at else '' }}
+              </option>
               {% endfor %}
-            </tbody>
-          </table>
+            </select>
+            <button class="btn btn-outline-danger">拉黑此顾客</button>
+          </form>
+          {% else %}
+          <div class="text-muted small">暂无来店顾客记录</div>
+          {% endif %}
         </div>
-
       </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>用户</th>
+              <th style="width:120px;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bl, u in blacklist_rows %}
+            <tr>
+              <td class="d-flex align-items-center gap-2">
+                {% if u.avatar_path %}
+                <img src="{{ url_for('static', filename=u.avatar_path) }}"
+                  style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(17,24,39,.08);">
+                {% endif %}
+                <span class="fw-semibold">{{ u.username }}</span>
+                <span class="text-muted small">(ID: {{ u.id }})</span>
+              </td>
+              <td>
+                <form method="post" action="{{ url_for('manage.remove_blacklist', user_id=u.id) }}"
+                  onsubmit="return confirm('确定移出黑名单吗？');">
+                  <button class="btn btn-sm btn-outline-danger">移出</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="2" class="text-muted">暂无黑名单</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
   (() => {
-    const showBlacklist = {{ show_blacklist|default(false) | tojson }};
-    if (showBlacklist) {
-      const modalEl = document.getElementById('blacklistModal');
-      if (modalEl && window.bootstrap) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-      }
-    }
-  })();
+    const overlay = document.getElementById('blacklistOverlay');
+    const triggerBtn = document.getElementById('blacklistTrigger');
+    const showBlacklist = {{ show_blacklist|default (false) | tojson
+  }};
+
+  const showModal = () => {
+    if (!overlay) return;
+    overlay.classList.add('show');
+    overlay.removeAttribute('aria-hidden');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const hideModal = () => {
+    if (!overlay) return;
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  };
+
+  triggerBtn?.addEventListener('click', showModal);
+  overlay?.addEventListener('click', (e) => { if (e.target === overlay) hideModal(); });
+  overlay?.querySelectorAll('.js-close-blacklist').forEach(btn => btn.addEventListener('click', hideModal));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay?.classList.contains('show')) hideModal(); });
+
+  if (showBlacklist) {
+    showModal();
+  }
+  }) ();
 </script>
 {% endblock %}

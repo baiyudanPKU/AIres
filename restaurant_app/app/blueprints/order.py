@@ -126,6 +126,63 @@ def _get_dish_history(user_id, restaurant_id, dish_id, max_messages=20):
     return "\n".join(lines)
 
 
+def _get_sales_snapshot(restaurant_id, dish_id, top_n=5):
+    """获取销量快照：当前菜品销量、销售额、餐厅订单收入、销量 TopN"""
+    # 单品销量 / 销售额
+    dish_agg = (
+        db.session.query(
+            func.coalesce(func.sum(OrderItem.quantity), 0).label("qty"),
+            func.coalesce(func.sum(OrderItem.quantity * OrderItem.unit_price), 0).label("revenue"),
+        )
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.restaurant_id == restaurant_id, OrderItem.dish_id == dish_id)
+        .first()
+    )
+
+    # 全店订单统计
+    rest_agg = (
+        db.session.query(
+            func.coalesce(func.count(Order.id), 0).label("order_count"),
+            func.coalesce(func.sum(Order.total_amount), 0).label("order_revenue"),
+        )
+        .filter(Order.restaurant_id == restaurant_id)
+        .first()
+    )
+
+    # 销量 TopN 菜品
+    top_rows = (
+        db.session.query(
+            Dish.id,
+            Dish.name,
+            func.coalesce(func.sum(OrderItem.quantity), 0).label("qty"),
+            func.coalesce(func.sum(OrderItem.quantity * OrderItem.unit_price), 0).label("revenue"),
+        )
+        .join(OrderItem, OrderItem.dish_id == Dish.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Dish.restaurant_id == restaurant_id)
+        .group_by(Dish.id)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .limit(top_n)
+        .all()
+    )
+
+    return {
+        "dish_qty": float(dish_agg.qty) if dish_agg and dish_agg.qty is not None else 0.0,
+        "dish_revenue": float(dish_agg.revenue) if dish_agg and dish_agg.revenue is not None else 0.0,
+        "order_count": int(rest_agg.order_count) if rest_agg and rest_agg.order_count is not None else 0,
+        "order_revenue": float(rest_agg.order_revenue) if rest_agg and rest_agg.order_revenue is not None else 0.0,
+        "top": [
+            {
+                "id": r.id,
+                "name": r.name,
+                "qty": float(r.qty) if r.qty is not None else 0.0,
+                "revenue": float(r.revenue) if r.revenue is not None else 0.0,
+            }
+            for r in top_rows
+        ],
+    }
+
+
 def _call_ai_for_dish(user_id, restaurant, dish, question):
     # ✅ 这里复用你商家端同一套网关
     GATEWAY_BASE_URL = "https://chat.noc.pku.edu.cn"
@@ -143,6 +200,13 @@ def _call_ai_for_dish(user_id, restaurant, dish, question):
         for d in all_dishes[:30]   # 最多给 30 个，够用了
     ])
 
+    sales = _get_sales_snapshot(restaurant.id, dish.id)
+
+    top_lines = []
+    for i, row in enumerate(sales.get("top", []), 1):
+        top_lines.append(f"{i}. {row['name']} - 销量 {row['qty']:.0f} 份 · 销售额 ¥{row['revenue']:.2f}")
+    top_text = "\n".join(top_lines) if top_lines else "(暂无销量数据)"
+
     system_content = f"""
 你是一个“点餐助手”，面向普通顾客，目标是帮助顾客更快决定吃什么、怎么搭配、是否符合口味。
 
@@ -151,6 +215,10 @@ def _call_ai_for_dish(user_id, restaurant, dish, question):
 - 当前菜品：{dish.name}
 - 价格：¥{float(dish.price):.2f}
 - 菜品描述：{dish.description or "（暂无）"}
+- 当前菜品历史销量：{sales['dish_qty']:.0f} 份，累计销售额：¥{sales['dish_revenue']:.2f}
+- 本餐厅订单数：{sales['order_count']}，累计销售额：¥{sales['order_revenue']:.2f}
+- 销量 Top{len(top_lines) or 0}（全店）：
+{top_text}
 
 可选：餐厅菜单（用于推荐/对比）：
 {menu_text}
